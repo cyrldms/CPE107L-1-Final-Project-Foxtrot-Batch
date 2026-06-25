@@ -49,6 +49,15 @@
                                             <%= locals.rejectedCount || 0 %> Returned
                                         </span>
                                     </div>
+                                    <% if (user && user.role === 'Admin') { %>
+                                    <a href="/syllabus/hr/peo-so"
+                                       title="Manage Program Educational Objectives & Student Outcomes"
+                                       style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#3949ab,#5c6bc0);color:#fff;border-radius:8px;padding:6px 14px;font-size:0.78rem;font-weight:700;text-decoration:none;white-space:nowrap;box-shadow:0 3px 10px rgba(57,73,171,0.28);transition:transform 0.15s,box-shadow 0.15s;"
+                                       onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 16px rgba(57,73,171,0.4)'"
+                                       onmouseout="this.style.transform='';this.style.boxShadow='0 3px 10px rgba(57,73,171,0.28)'">
+                                        <i class="fas fa-layer-group"></i> Manage PEO &amp; SO
+                                    </a>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>

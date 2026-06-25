@@ -1,4 +1,6 @@
 function autoSaveNewSyllabus() {
+    if (window.IS_PEO_SO_LOCKED) return;
+
     const draftData = {
         peos: Array.from(document.querySelectorAll('#peo-container .peo-row')).map(row => ({
             text: row.querySelector('.peo-editable-text')?.innerText || "",
@@ -229,12 +231,49 @@ window.addEventListener('load', () => {
                           ( (window.SERVER_SYLLABUS_DATA.peos && window.SERVER_SYLLABUS_DATA.peos.description.length > 0) || 
                             (window.SERVER_SYLLABUS_DATA.sos && window.SERVER_SYLLABUS_DATA.sos.description.length > 0) );
 
-    if (hasServerData && !savedSessionData) {
-        loadFromServer();
-    } else if (savedSessionData) {
-        loadFromSession();
+    // Only treat session data as meaningful if it contains actual text content.
+    // An empty auto-saved draft must not block the admin template from loading.
+    const hasSessionContent = (() => {
+        if (!savedSessionData) return false;
+        try {
+            const d = JSON.parse(savedSessionData);
+            return (Array.isArray(d.peos) && d.peos.some(p => p.text && p.text.trim())) ||
+                   (Array.isArray(d.sos)  && d.sos.some(s => s.text && s.text.trim()));
+        } catch { return false; }
+    })();
+
+    if (hasSessionContent) {
+        loadFromSession();         // Professor has an active draft in progress → restore it
+    } else if (hasServerData) {
+        loadFromServer();          // No real draft → load admin template (or professor's saved DB data)
+    }
+    // else: both absent → keep the single default empty row that EJS rendered
+
+    if (window.IS_PEO_SO_LOCKED) {
+        applyPeoSoLock();
     }
 });
+
+function applyPeoSoLock() {
+    // 1. Make text read-only
+    document.querySelectorAll('.peo-editable-text').forEach(el => {
+        el.setAttribute('contenteditable', 'false');
+    });
+    // 2. Disable checkboxes
+    document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+        el.disabled = true;
+    });
+    // 3. Hide all Add Row and Delete buttons
+    document.querySelectorAll('.btn-add-row, .btn-delete-row').forEach(el => {
+        el.style.display = 'none';
+    });
+    // 4. Overwrite add/delete row functions to prevent JS hacks
+    window.addPeoRow = function() { console.warn("PEO/SO is locked."); };
+    window.addSoRow = function() { console.warn("PEO/SO is locked."); };
+    window.deletePeoRow = function() { console.warn("PEO/SO is locked."); };
+    window.deleteSoRow = function() { console.warn("PEO/SO is locked."); };
+}
+
 
 document.querySelectorAll('[contenteditable][data-placeholder]').forEach(initPersistentPlaceholder);
 

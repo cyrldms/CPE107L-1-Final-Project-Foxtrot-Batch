@@ -3,6 +3,7 @@ import multer from 'multer';
 import Syllabus from '../../models/Syllabus/syllabus.js';
 import ProgramEducationalObjectives from '../../models/Syllabus/programEducationObjectives.js';
 import StudentEducationalObjectives from '../../models/Syllabus/studentEducationalObjectives.js';
+import SyllabusApprovalStatus from '../../models/Syllabus/syllabusApprovalStatus.js';
 
 const newSyllabusRoutes = express.Router();
 
@@ -21,14 +22,33 @@ newSyllabusRoutes.get('/:syllabusId', async (req, res) => {
         const syllabusId = req.params.syllabusId;
         console.log(`DEBUG: Reached newSyllabusRoutes GET /:syllabusId with ID: ${syllabusId}`);
         
-        const peos = await ProgramEducationalObjectives.findOne({ syllabusID: syllabusId });
-        const sos = await StudentEducationalObjectives.findOne({ syllabusID: syllabusId });
+        let peos = await ProgramEducationalObjectives.findOne({ syllabusID: syllabusId });
+        let sos  = await StudentEducationalObjectives.findOne({ syllabusID: syllabusId });
+
+        // Fall back to admin global template only when BOTH are absent for this syllabus.
+        // Never partially merge template + existing data.
+        if (!peos && !sos) {
+            const template = await Syllabus.findOne({ courseCode: '__GLOBAL_TEMPLATE__' });
+            if (template) {
+                peos = await ProgramEducationalObjectives.findOne({ syllabusID: template._id });
+                sos  = await StudentEducationalObjectives.findOne({ syllabusID: template._id });
+            }
+        }
+
+        // Check if syllabus is submitted to enforce lock
+        let isPeoSoLocked = false;
+        const approval = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId });
+        const lockedStatuses = ["Pending", "Endorsed", "Approved", "Archived"];
+        if (approval && approval.status && lockedStatuses.includes(approval.status)) {
+            isPeoSoLocked = true;
+        }
 
         res.render('Syllabus/newSyllabus', {
             currentPageCategory: "syllabus",
             syllabusId: syllabusId,
             peos: peos || null,
-            sos: sos || null
+            sos: sos || null,
+            isPeoSoLocked: isPeoSoLocked
         });
     } catch (err) {
         console.error("Error fetching PEOs/SOs:", err);
@@ -36,7 +56,8 @@ newSyllabusRoutes.get('/:syllabusId', async (req, res) => {
             currentPageCategory: "syllabus",
             syllabusId: req.params.syllabusId,
             peos: null,
-            sos: null
+            sos: null,
+            isPeoSoLocked: false
         });
     }
 });

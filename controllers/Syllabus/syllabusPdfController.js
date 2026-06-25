@@ -1,4 +1,4 @@
-import Syllabus from '../../models/Syllabus/syllabus.js';
+          import Syllabus from '../../models/Syllabus/syllabus.js';
 import CourseOutcomes from '../../models/Syllabus/courseOutcomes.js';
 import CourseMapping from '../../models/Syllabus/courseMapping.js';
 import WeeklySchedule from '../../models/Syllabus/weeklySchedule.js';
@@ -98,12 +98,14 @@ export async function generateSyllabusPdf(req, res) {
 
         // Use Puppeteer to generate PDF
         const browser = await puppeteer.launch({
-            headless: 'new',
+            headless: 'shell',
+            executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();
+        await new Promise(r => setTimeout(r, 500)); // wait for frame manager initialization
         
-        await page.setContent(html, { waitUntil: 'networkidle0' });
+        await page.setContent(html, { waitUntil: 'load', timeout: 60000 });
         
         // Format submission date based on approval record
         let submissionDate = 'N/A';
@@ -172,12 +174,19 @@ export async function generateSyllabusPdf(req, res) {
 
         await browser.close();
 
+        const finalBuffer = Buffer.from(pdfBuffer);
+        
+        const safeCourseCode = (syl.courseCode || 'Draft').replace(/[^a-z0-9]/gi, '-');
+        const safeTitle = (syl.courseTitle || 'Syllabus').replace(/[^a-z0-9]/gi, '-');
+        const safeTerm = `${syl.schoolYear || 'AY'}-${syl.term || 'Term'}`.replace(/[^a-z0-9-]/gi, '-');
+        const filename = `${safeCourseCode}-${safeTitle}-${safeTerm}.pdf`;
+
         res.set({
             'Content-Type': 'application/pdf',
-            'Content-Disposition': 'attachment; filename="Syllabus_' + (syl.courseCode || 'Draft') + '.pdf"',
-            'Content-Length': pdfBuffer.length
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Content-Length': finalBuffer.length
         });
-        res.send(pdfBuffer);
+        res.send(finalBuffer);
 
     } catch (err) {
         console.error('PDF Generation Error:', err);

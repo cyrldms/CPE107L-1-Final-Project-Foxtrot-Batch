@@ -30,7 +30,7 @@
                 </div>
 
                 <div class="syllabus-content-section" style="max-width: 1400px; margin: 0 auto;">
-                    <h2 class="college-header-outside">COURSE SCHEDULE</h2>
+                    <h2 class="college-header-outside" data-section-key="schedule" data-section-name="Course Schedule">COURSE SCHEDULE</h2>
 
                     <!-- Toolbar Pill -->
                     <div class="outcomes-toolbar no-pdf">
@@ -144,7 +144,7 @@
                         </div>
                     </div>
 
-                    <h2 class="college-header-outside">COURSE EVALUATION</h2>
+                    <h2 class="college-header-outside" data-section-key="evaluation" data-section-name="Course Evaluation">COURSE EVALUATION</h2>
                     <p class="evaluation-instruction">The final grade of the student is based on the following
                         components:</p>
 
@@ -222,8 +222,8 @@
                                     <th rowspan="2" class="col-weight">Final Weighting, %</th>
                                 </tr>
                                 <tr>
-                                    <th class="col-sub">LT</th>
-                                    <th class="col-sub">PE</th>
+                                    <th class="col-sub" title="Formative Assessment" style="color: black;">FA</th>
+                                    <th class="col-sub" title="Summative Assessment" style="color: black;">SA</th>
                                 </tr>
                             </thead>
                             <tbody id="evaluation-editor-body">
@@ -232,8 +232,8 @@
                         </table>
                     </div>
 
-                    <p style="margin-top: 40px; margin-bottom: 10px;"><b>Course Outcomes Assessment</b></p>
-                    <p style="margin-bottom: 20px; font-size: 14px;">Achievement of course outcomes is based on the
+                    <h2 class="college-header-outside" style="margin-top: 40px;" data-section-key="assessment" data-section-name="Course Outcomes Assessment">COURSE OUTCOMES ASSESSMENT</h2>
+                    <p style="margin-bottom: 20px; font-size: 14px; text-align: center;">Achievement of course outcomes is based on the
                         following:</p>
 
                     <!-- Assessment Toolbar -->
@@ -301,9 +301,9 @@
                         <table class="schedule-editor-table assessment-editor-table">
                             <thead>
                                 <tr>
-                                    <th class="col-assessment-co">COURSE OUTCOMES</th>
-                                    <th class="col-assessment-tasks">ASSESSMENT TASKS</th>
-                                    <th class="col-assessment-msp">MINIMUM SATISFACTORY PERFORMANCE</th>
+                                    <th class="col-assessment-co">Course Outcomes</th>
+                                    <th class="col-assessment-tasks">Assessment Tasks</th>
+                                    <th class="col-assessment-msp">Minimum Satisfactory Performance</th>
                                 </tr>
                             </thead>
                             <tbody id="assessment-editor-body">
@@ -382,17 +382,23 @@
         </main>
     </div>
 
+    <script id="server-data-schedules" type="application/json"><%- JSON.stringify(locals.schedules || []) %></script>
+    <script id="server-data-evaluation" type="application/json"><%- JSON.stringify(locals.evaluation || []) %></script>
+    <script id="server-data-assessment" type="application/json"><%- JSON.stringify(locals.assessment || []) %></script>
+    <script type="application/json" id="section-comments-data"><%- JSON.stringify(locals.sectionComments || []) %></script>
     <script>
         window.CURRENT_SYLLABUS_ID = "<%= locals.syllabusId || '' %>";
         window.USER_ROLE = "<%= locals.userRole || '' %>";
         window.USER_ID = "<%= locals.userId || '' %>";
+        window.SYLLABUS_STATUS = "<%= locals.approvalStatus || 'Not Submitted' %>";
         window.SERVER_SYLLABUS_DATA = {
-            schedules: <%- JSON.stringify(locals.schedules || []) %>,
-            evaluation: <%- JSON.stringify(locals.evaluation || []) %>,
-            assessment: <%- JSON.stringify(locals.assessment || []) %>
+            schedules: JSON.parse(document.getElementById('server-data-schedules').textContent),
+            evaluation: JSON.parse(document.getElementById('server-data-evaluation').textContent),
+            assessment: JSON.parse(document.getElementById('server-data-assessment').textContent)
         };
     </script>
     <script src="/Syllabus/js/scheduleSyllabus.js?v=<%= new Date().getTime() %>"></script>
+    <script src="/Syllabus/js/sectionComments.js?v=2"></script>
 </body>
 
 </html>

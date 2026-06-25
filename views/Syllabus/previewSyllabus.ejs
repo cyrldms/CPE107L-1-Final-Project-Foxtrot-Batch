@@ -187,9 +187,9 @@
                                             </div>
                                             <div class="peo-checkbox-side">
                                                 <% const rating = peos.rating && peos.rating[idx] ? peos.rating[idx] : '' %>
-                                                <input type="checkbox" <%= rating.includes('A') ? 'checked' : '' %>>
-                                                <input type="checkbox" <%= rating.includes('B') ? 'checked' : '' %>>
-                                                <input type="checkbox" <%= rating.includes('C') ? 'checked' : '' %>>
+                                                <input type="checkbox" <%= rating[0] === '1' ? 'checked' : '' %> disabled>
+                                                <input type="checkbox" <%= rating[1] === '1' ? 'checked' : '' %> disabled>
+                                                <input type="checkbox" <%= rating[2] === '1' ? 'checked' : '' %> disabled>
                                             </div>
                                         </div>
                                     <% }); %>
@@ -222,9 +222,9 @@
                                             </div>
                                             <div class="peo-checkbox-side">
                                                 <% const rating = sos.rating && sos.rating[idx] ? sos.rating[idx] : '' %>
-                                                <input type="checkbox" <%= rating.includes('1') ? 'checked' : '' %>>
-                                                <input type="checkbox" <%= rating.includes('2') ? 'checked' : '' %>>
-                                                <input type="checkbox" <%= rating.includes('3') ? 'checked' : '' %>>
+                                                <input type="checkbox" <%= rating[0] === '1' ? 'checked' : '' %> disabled>
+                                                <input type="checkbox" <%= rating[1] === '1' ? 'checked' : '' %> disabled>
+                                                <input type="checkbox" <%= rating[2] === '1' ? 'checked' : '' %> disabled>
                                             </div>
                                         </div>
                                     <% }); %>
@@ -272,9 +272,15 @@
 
                             <div class="info-row">
                                 <div class="info-item">
-                                    <label>CLASS SCHEDULE</label>
-                                    <div class="course-editable-text"><%= locals.syl && syl.classSchedule ? syl.classSchedule : 'Not set' %></div>
+                                    <label>NUMBER OF LECTURE HOURS PER WEEK</label>
+                                    <div class="course-editable-text"><%= locals.syl && syl.classSchedule ? syl.classSchedule : '0' %></div>
                                 </div>
+                                <div class="info-item">
+                                    <label>NUMBER OF LABORATORY HOURS PER WEEK</label>
+                                    <div class="course-editable-text">0</div>
+                                </div>
+                            </div>
+                            <div class="info-row">
                                 <div class="info-item">
                                     <label>COURSE DESIGN</label>
                                     <div class="course-editable-text"><%= locals.syl && syl.courseDesign ? syl.courseDesign : 'Not set' %></div>
@@ -447,8 +453,8 @@
                                         <th rowspan="2">Final Weight, %</th>
                                     </tr>
                                     <tr>
-                                        <th>LT</th>
-                                        <th>PE</th>
+                                        <th style="color: black;">FA</th>
+                                        <th style="color: black;">SA</th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -144,6 +144,7 @@
 
     <script>
         window.CURRENT_SYLLABUS_ID = "<%= locals.syllabusId || '' %>";
+        window.IS_PEO_SO_LOCKED    = <%= locals.isPeoSoLocked || false %>;
         window.SERVER_SYLLABUS_DATA = {
             peos: <%- JSON.stringify(locals.peos || null) %>,
             sos: <%- JSON.stringify(locals.sos || null) %>

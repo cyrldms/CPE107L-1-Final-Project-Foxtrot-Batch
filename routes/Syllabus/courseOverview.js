@@ -67,7 +67,7 @@ coursesOverviewRouter.get('/search', async (req, res) => {
         const userId = req.query.userId || '';
         const userRole = req.session.user ? req.session.user.role?.toLowerCase() : '';
 
-        const filter = {};
+        const filter = { courseCode: { $ne: '__GLOBAL_TEMPLATE__' } };
 
         // If the user is a Professor, restrict search to only their assigned courses
         if (userRole === 'professor' && req.session.user) {
@@ -139,8 +139,10 @@ coursesOverviewRouter.get('/:userId', async (req, res) => {
             return res.redirect("/login");
         }
 
-        // Deans see ALL courses, faculty see only their own
-        const courseFilter = userRole === 'dean' ? {} : { userID: userId };
+        // Deans see ALL courses, faculty see only their own — but never the internal template
+        const courseFilter = userRole === 'dean'
+            ? { courseCode: { $ne: '__GLOBAL_TEMPLATE__' } }
+            : { userID: userId, courseCode: { $ne: '__GLOBAL_TEMPLATE__' } };
         console.log(`🔍 Course filter:`, courseFilter);
         let userCourses = await Syllabus.find(courseFilter);
         console.log(`✅ Courses found: ${userCourses.length}`);

@@ -474,9 +474,7 @@
     <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
          Hidden data attributes for JS
     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-    <script type="application/json" id="section-comments-data">
-        <%- JSON.stringify(locals.sectionComments || []) %>
-    </script>
+    
     <script>
         const SYLLABUS_APPROVAL_DATA = {
             syllabusId: '<%= locals.syllabusId || syllabusId || "" %>',
@@ -492,7 +490,7 @@
         };
     </script>
     <script src="/Syllabus/js/syllabusApprovalDetail.js?v=3"></script>
-    <script src="/Syllabus/js/sectionComments.js?v=2"></script>
+    
 </body>
 
 </html>

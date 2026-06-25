@@ -1,8 +1,9 @@
 function autoSaveInfo() {
     // Helper to get text by row and item index for the grid
     const getGridText = (rowIdx, itemIdx) => {
-        return document.querySelectorAll('.info-row')[rowIdx]
-            ?.querySelectorAll('.course-editable-text')[itemIdx]?.innerText.trim() || "";
+        const el = document.querySelectorAll('.info-row')[rowIdx]?.querySelectorAll('.course-editable-text')[itemIdx];
+        if (!el) return "";
+        return (el.tagName === 'SELECT' || el.tagName === 'INPUT') ? el.value : el.innerText.trim();
     };
 
     const infoData = {
@@ -13,8 +14,8 @@ function autoSaveInfo() {
         preRequisite: getGridText(1, 0),
         coRequisite: getGridText(1, 1),
         creditUnits: getGridText(1, 2),
-        classSchedule: getGridText(2, 0),
-        courseDesign: getGridText(2, 1),
+        classSchedule: (parseInt(getGridText(2, 0)) || 0) + (parseInt(getGridText(2, 1)) || 0),
+        courseDesign: getGridText(3, 0),
 
         // Text Areas
         courseDescription: document.querySelector('.multiline[data-placeholder*="course description"]')?.innerText.trim() || "",
@@ -24,7 +25,7 @@ function autoSaveInfo() {
         // Course Outcomes Statement Grid (The CO1, CO2 list)
         outcomesGrid: Array.from(document.querySelectorAll('#outcomes-container .outcomes-row')).map(row => ({
             statement: row.querySelector('.outcomes-statement .outcomes-editable-text')?.innerText.trim() || "",
-            skills: row.querySelector('.outcomes-skills-side .outcomes-editable-text')?.innerText.trim() || ""
+            skills: row.querySelector('.outcomes-skills-side .outcomes-skills-select')?.value || row.querySelector('.outcomes-skills-side .outcomes-editable-text')?.innerText.trim() || ""
         })),
 
         // Mapping Table (I, E, D dropdowns)
@@ -116,7 +117,21 @@ function loadInfoFromSession() {
 
     const setGridText = (rowIdx, itemIdx, val) => {
         const el = document.querySelectorAll('.info-row')[rowIdx]?.querySelectorAll('.course-editable-text')[itemIdx];
-        if (el && val) el.innerText = val;
+        if (!el || !val) return;
+        if (el.tagName === 'SELECT') {
+            const optionExists = Array.from(el.options).some(opt => opt.value === val);
+            if (!optionExists) {
+                const newOption = document.createElement('option');
+                newOption.value = val;
+                newOption.textContent = val;
+                el.appendChild(newOption);
+            }
+            el.value = val;
+        } else if (el.tagName === 'INPUT') {
+            el.value = val;
+        } else {
+            el.innerText = val;
+        }
     };
 
     // 1. Restore Grid & Multilines
@@ -128,8 +143,9 @@ function loadInfoFromSession() {
     setGridText(1, 0, data.preRequisite);
     setGridText(1, 1, data.coRequisite);
     setGridText(1, 2, data.creditUnits);
-    setGridText(2, 0, data.classSchedule);
-    setGridText(2, 1, data.courseDesign);
+    setGridText(2, 0, data.classSchedule || 0);
+    setGridText(2, 1, 0);
+    setGridText(3, 0, data.courseDesign);
     
     const desc = document.querySelector('.multiline[data-placeholder*="course description"]');
     if (desc) desc.innerText = data.courseDescription || "";
@@ -175,7 +191,19 @@ function loadInfoFromSession() {
             const lastRow = outcomesContainer.lastElementChild;
             if (lastRow) {
                 lastRow.querySelector('.outcomes-statement .outcomes-editable-text').innerText = item.statement;
-                lastRow.querySelector('.outcomes-skills-side .outcomes-editable-text').innerText = item.skills;
+                const selectEl = lastRow.querySelector('.outcomes-skills-side .outcomes-skills-select');
+                if (selectEl && item.skills) {
+                    const optionExists = Array.from(selectEl.options).some(opt => opt.value === item.skills);
+                    if (!optionExists) {
+                        const newOption = document.createElement('option');
+                        newOption.value = item.skills;
+                        newOption.textContent = item.skills;
+                        selectEl.appendChild(newOption);
+                    }
+                    selectEl.value = item.skills;
+                } else if (!selectEl) {
+                    lastRow.querySelector('.outcomes-skills-side .outcomes-editable-text').innerText = item.skills;
+                }
             }
         });
     }
@@ -222,13 +250,30 @@ function loadInfoFromServer() {
         // Also fill other basic info fields if available
         const setGridText = (rowIdx, itemIdx, val) => {
             const el = document.querySelectorAll('.info-row')[rowIdx]?.querySelectorAll('.course-editable-text')[itemIdx];
-            if (el && val && !el.innerText.trim()) el.innerText = val;
+            if (!el || !val) return;
+            if (el.tagName === 'SELECT') {
+                if (!el.value) { // Only set if not already selected
+                    const optionExists = Array.from(el.options).some(opt => opt.value === val);
+                    if (!optionExists) {
+                        const newOption = document.createElement('option');
+                        newOption.value = val;
+                        newOption.textContent = val;
+                        el.appendChild(newOption);
+                    }
+                    el.value = val;
+                }
+            } else if (el.tagName === 'INPUT') {
+                el.value = val;
+            } else {
+                if (!el.innerText.trim()) el.innerText = val;
+            }
         };
         setGridText(1, 0, syl.preRequisite);
         setGridText(1, 1, syl.coRequisite);
         setGridText(1, 2, syl.creditUnits);
-        setGridText(2, 0, syl.classSchedule);
-        setGridText(2, 1, syl.courseDesign);
+        setGridText(2, 0, syl.classSchedule || 0);
+        setGridText(2, 1, 0);
+        setGridText(3, 0, syl.courseDesign);
 
         const desc = document.querySelector('.multiline[data-placeholder*="course description"]');
         if (desc && syl.courseDescription && !desc.innerText.trim()) desc.innerText = syl.courseDescription;
@@ -249,7 +294,20 @@ function loadInfoFromServer() {
             const lastRow = outcomesContainer.lastElementChild;
             if (lastRow) {
                 lastRow.querySelector('.outcomes-statement .outcomes-editable-text').innerText = (item.description && item.description[0]) || "";
-                lastRow.querySelector('.outcomes-skills-side .outcomes-editable-text').innerText = (item.thinkingSkills && item.thinkingSkills[0]) || "";
+                const val = (item.thinkingSkills && item.thinkingSkills[0]) || "";
+                const selectEl = lastRow.querySelector('.outcomes-skills-side .outcomes-skills-select');
+                if (selectEl && val) {
+                    const optionExists = Array.from(selectEl.options).some(opt => opt.value === val);
+                    if (!optionExists) {
+                        const newOption = document.createElement('option');
+                        newOption.value = val;
+                        newOption.textContent = val;
+                        selectEl.appendChild(newOption);
+                    }
+                    selectEl.value = val;
+                } else if (!selectEl) {
+                    lastRow.querySelector('.outcomes-skills-side .outcomes-editable-text').innerText = val;
+                }
             }
         });
     }
@@ -334,7 +392,15 @@ function addCoRow() {
       <div class="outcomes-editable-text" contenteditable="true" data-placeholder="Edit text"></div>
     </div>
     <div class="outcomes-skills-side">
-      <div class="outcomes-editable-text" contenteditable="true" data-placeholder="e.g. Creating"></div>
+      <select class="outcomes-skills-select syllabus-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+        <option value="" disabled selected>Select Thinking Skill</option>
+        <option value="Remembering">Remembering</option>
+        <option value="Understanding">Understanding</option>
+        <option value="Applying">Applying</option>
+        <option value="Analyzing">Analyzing</option>
+        <option value="Evaluating">Evaluating</option>
+        <option value="Creating">Creating</option>
+      </select>
     </div>
     <button class="btn-delete-row" onclick="deleteCoRow(this)" title="Delete row">
       <span class="material-symbols-outlined">remove</span>
@@ -1037,8 +1103,9 @@ window.saveInfoToSession = function() {
     try {
         // Helper to get text by row and item index for the grid
         const getGridText = (rowIdx, itemIdx) => {
-            return document.querySelectorAll('.info-row')[rowIdx]
-                ?.querySelectorAll('.course-editable-text')[itemIdx]?.innerText.trim() || "";
+            const el = document.querySelectorAll('.info-row')[rowIdx]?.querySelectorAll('.course-editable-text')[itemIdx];
+            if (!el) return "";
+            return (el.tagName === 'SELECT' || el.tagName === 'INPUT') ? el.value : el.innerText.trim();
         };
 
         const ayTermStr = document.getElementById('ay-term-field')?.innerText.trim() || '';
@@ -1058,8 +1125,8 @@ window.saveInfoToSession = function() {
             preRequisite: getGridText(1, 0),
             coRequisite: getGridText(1, 1),
             units: getGridText(1, 2),
-            classSchedule: getGridText(2, 0),
-            courseDesign: getGridText(2, 1),
+            classSchedule: (parseInt(getGridText(2, 0)) || 0) + (parseInt(getGridText(2, 1)) || 0),
+            courseDesign: getGridText(3, 0),
             courseDescription: document.querySelector('.multiline[data-placeholder*="course description"]')?.innerText.trim() || '',
             textbook: document.querySelector('.multiline[data-placeholder*="textbook"]')?.innerText.trim() || '',
             references: document.querySelector('.multiline[data-placeholder*="references"]')?.innerText.trim() || '',
@@ -1074,7 +1141,7 @@ window.saveInfoToSession = function() {
         const coRows = document.querySelectorAll('.outcomes-row');
         payload.courseOutcomesList = Array.from(coRows).map((row, index) => {
             const text = row.querySelector('.outcomes-statement .outcomes-editable-text')?.innerText.trim() || '';
-            const skills = row.querySelector('.outcomes-skills-side .outcomes-editable-text')?.innerText.trim() || '';
+            const skills = row.querySelector('.outcomes-skills-side .outcomes-skills-select')?.value || row.querySelector('.outcomes-skills-side .outcomes-editable-text')?.innerText.trim() || '';
             return {
                 coNumber: `CO${index + 1}`,
                 text,
@@ -1100,12 +1167,17 @@ window.saveInfoToSession = function() {
         const editorRows = document.querySelectorAll('#outcomes-editor-body tr');
         payload.courseOutcomesEditor = Array.from(editorRows)
             .filter(r => r.style.display !== 'none') // ignore hidden rows from merged cells
-            .map(row => {
+            .slice(0, payload.courseOutcomesList ? payload.courseOutcomesList.length : 0)
+            .map((row, index) => {
                 const cells = row.querySelectorAll('.editable-cell');
+                // Inject thinkingSkills from the Course Outcomes Grid dropdown (Req 6)
+                const skillsFromGrid = payload.courseOutcomesList && payload.courseOutcomesList[index]
+                    ? payload.courseOutcomesList[index].skills
+                    : '';
                 return {
                     coNumber: cells[0]?.innerText.trim() || '',
                     description: cells[1]?.innerText.trim() || '',
-                    thinkingSkills: cells[2]?.innerText.trim() || '' 
+                    thinkingSkills: skillsFromGrid || ''
                 };
             });
 

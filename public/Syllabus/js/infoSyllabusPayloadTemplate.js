@@ -12,8 +12,12 @@ function saveInfoToSession() {
     const coRequisite = document.querySelectorAll('.content-panel-transparent:nth-of-type(2) .course-editable-text')[1]?.innerText.trim() || '';
     
     const units = document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[0]?.innerText.trim() || '';
-    const classSchedule = document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[1]?.innerText.trim() || '';
-    const courseDesign = document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[2]?.innerText.trim() || '';
+    const lectureHrs = parseInt(document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[1]?.value || '0') || 0;
+    const labHrs = parseInt(document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[2]?.value || '0') || 0;
+    const classSchedule = lectureHrs + labHrs;
+    
+    const courseDesignEl = document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[3];
+    const courseDesign = courseDesignEl ? (courseDesignEl.tagName === 'SELECT' ? courseDesignEl.value : courseDesignEl.innerText.trim()) : '';
     
     const courseDescription = document.querySelector('.course-desc-box')?.innerText.trim() || '';
     
@@ -39,7 +43,7 @@ function saveInfoToSession() {
     const coRows = document.querySelectorAll('.outcomes-row');
     payload.courseOutcomesList = Array.from(coRows).map((row, index) => {
         const text = row.querySelector('.outcomes-statement .outcomes-editable-text')?.innerText.trim() || '';
-        const skills = row.querySelector('.outcomes-skills-side .outcomes-editable-text')?.innerText.trim() || '';
+        const skills = row.querySelector('.outcomes-skills-side .outcomes-skills-select')?.value || row.querySelector('.outcomes-skills-side .outcomes-editable-text')?.innerText.trim() || '';
         return {
             coNumber: `CO${index + 1}`,
             text,
@@ -65,12 +69,19 @@ function saveInfoToSession() {
 
     // 5. Course Outcomes Editor Table (Description, Thinking Skills, Tasks)
     const editorRows = document.querySelectorAll('#outcomes-editor-body tr');
-    payload.courseOutcomesEditor = Array.from(editorRows).map(row => {
+    payload.courseOutcomesEditor = Array.from(editorRows)
+        .filter(r => r.style.display !== 'none')
+        .slice(0, payload.courseOutcomesList ? payload.courseOutcomesList.length : 0)
+        .map((row, index) => {
         const cells = row.querySelectorAll('.editable-cell');
+        // Inject thinkingSkills from the Course Outcomes Grid dropdown (Req 6)
+        const skillsFromGrid = payload.courseOutcomesList && payload.courseOutcomesList[index]
+            ? payload.courseOutcomesList[index].skills
+            : '';
         return {
             coNumber: cells[0]?.innerText.trim() || '',
             description: cells[1]?.innerText.trim() || '',
-            thinkingSkills: cells[2]?.innerText.trim() || '' // Assuming we extract tasks somewhere else or it's the 3rd col
+            thinkingSkills: skillsFromGrid || ''
         };
     });
 

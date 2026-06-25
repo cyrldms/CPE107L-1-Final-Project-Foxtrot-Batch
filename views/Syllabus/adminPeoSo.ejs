@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manage global Program Educational Objectives and Student Outcomes template.">
+    <title>Manage PEO &amp; SO | Syllabus Admin</title>
+    <link rel="icon" type="image/x-icon" href="/common/img/chalkboardLogo.ico">
+    <link rel="stylesheet" href="/common/css/variables.css">
+    <link rel="stylesheet" href="/Syllabus/css/syllabus.css">
+    <link rel="stylesheet" href="/Syllabus/css/adminOverview.css">
+    <link rel="stylesheet" href="/Syllabus/css/adminPeoSo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="dashboard">
+        <%- include('../partials/sideMenuBar') %>
+
+        <main class="main-content">
+            <section class="content-panel">
+                <div class="hr-panel">
+
+                    <!-- ── Page Header (same structure as courseOverviewAdmin.ejs) ── -->
+                    <div class="hr-header">
+                        <div class="hr-header-left">
+                            <button type="button" class="back-btn" onclick="window.location.href='/syllabus/hr'"
+                                    title="Back to HR Dashboard">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <div>
+                                <h1>Manage PEO &amp; SO</h1>
+                                <p class="hr-subtitle">
+                                    Define the global Program Educational Objectives and Student Outcomes.
+                                    Professors receive these as pre-filled starting values.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="hr-header-right">
+                            <div class="hr-stats">
+                                <% if (isReadOnly) { %>
+                                <span class="pso-badge-ro stat-pill">
+                                    <i class="fas fa-eye"></i> View Only
+                                </span>
+                                <% } else { %>
+                                <span class="stat-pill pso-badge-global">
+                                    <i class="fas fa-layer-group"></i> Global Template
+                                </span>
+                                <button id="btn-save-template" class="pso-save-btn" type="button" onclick="saveTemplate()">
+                                    <i class="fas fa-save"></i> Save Template
+                                </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── PEO Card ───────────────────────────────── -->
+                    <div class="pso-card">
+                        <div class="pso-card-header">
+                            <div class="pso-card-icon"><i class="fas fa-bullseye"></i></div>
+                            <div class="pso-card-header-text">
+                                <h2>Program Educational Objectives (PEO)</h2>
+                                <p>Three years after graduation, graduates of the Engineering Program shall:</p>
+                            </div>
+                        </div>
+
+                        <div class="pso-table">
+                            <div class="pso-thead">
+                                <span class="pso-col-num">#</span>
+                                <span class="pso-col-desc">Objective Description</span>
+                                <span class="pso-col-checks">
+                                    <span class="pso-col-checks-label">MISSION</span>
+                                    <span class="pso-col-checks-subs">
+                                        <span>A</span><span>B</span><span>C</span>
+                                    </span>
+                                </span>
+                                <% if (!isReadOnly) { %><span class="pso-col-del"></span><% } %>
+                            </div>
+                            <div id="peo-container"></div>
+                        </div>
+
+                        <% if (!isReadOnly) { %>
+                        <div class="pso-add-row">
+                            <button type="button" class="pso-add-btn" onclick="addPeoRow()">
+                                <i class="fas fa-plus"></i> Add Row
+                            </button>
+                        </div>
+                        <% } %>
+                    </div>
+
+                    <!-- ── SO Card ────────────────────────────────── -->
+                    <div class="pso-card">
+                        <div class="pso-card-header">
+                            <div class="pso-card-icon"><i class="fas fa-graduation-cap"></i></div>
+                            <div class="pso-card-header-text">
+                                <h2>Student Outcomes (SO)</h2>
+                                <p>By the time of graduation, the students of the program shall have the ability to:</p>
+                            </div>
+                        </div>
+
+                        <div class="pso-table">
+                            <div class="pso-thead">
+                                <span class="pso-col-num">#</span>
+                                <span class="pso-col-desc">Outcome Description</span>
+                                <span class="pso-col-checks">
+                                    <span class="pso-col-checks-label">PEO</span>
+                                    <span class="pso-col-checks-subs">
+                                        <span>1</span><span>2</span><span>3</span>
+                                    </span>
+                                </span>
+                                <% if (!isReadOnly) { %><span class="pso-col-del"></span><% } %>
+                            </div>
+                            <div id="so-container"></div>
+                        </div>
+
+                        <% if (!isReadOnly) { %>
+                        <div class="pso-add-row">
+                            <button type="button" class="pso-add-btn" onclick="addSoRow()">
+                                <i class="fas fa-plus"></i> Add Row
+                            </button>
+                        </div>
+                        <% } %>
+                    </div>
+
+                    <!-- ── Bottom Save ─────────────────────────────── -->
+                    <% if (!isReadOnly) { %>
+                    <div class="pso-bottom-bar">
+                        <button class="pso-save-btn" type="button"
+                                onclick="document.getElementById('btn-save-template').click()">
+                            <i class="fas fa-save"></i> Save Template
+                        </button>
+                    </div>
+                    <% } %>
+
+                </div><!-- /.hr-panel -->
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="pso-toast" class="pso-toast" role="status" aria-live="polite"></div>
+
+    <script>
+        window.IS_READ_ONLY = <%- JSON.stringify(isReadOnly) %>;
+        window.INITIAL_PEOS = <%- JSON.stringify(peos) %>;
+        window.INITIAL_SOS  = <%- JSON.stringify(sos) %>;
+    </script>
+    <script src="/Syllabus/js/adminPeoSo.js"></script>
+</body>
+
+</html>

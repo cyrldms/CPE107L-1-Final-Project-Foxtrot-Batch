@@ -366,7 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 syllabusId,
                 comment: document.getElementById('approval-comments')?.value || '',
                 status: statusSelect?.value || 'Pending',
-                action: 'draft'
+                action: 'draft',
+                sectionComments: window.currentSectionComments || []
             };
 
             try {
@@ -414,13 +415,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!confirm(`Are you sure you want to submit this ${actionLabel} as "${status}"?`)) return;
 
+            if (typeof window.flushSectionComments === 'function') {
+                window.flushSectionComments();
+            }
+
             const payload = {
                 syllabusId,
                 comment,
                 status,
                 signatoryName,
                 signature: signatureImg ? signatureImg.src : null,
-                action: 'submit'
+                action: 'submit',
+                sectionComments: window.currentSectionComments || []
             };
 
             try {

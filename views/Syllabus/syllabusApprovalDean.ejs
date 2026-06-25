@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Approve Syllabus — Dean</title>
+    <title>Approve Syllabus â€” Dean</title>
     <link rel="icon" type="image/x-icon" href="/common/img/chalkboardLogo.ico">
 
     <!-- School palette variables -->
@@ -21,9 +21,9 @@
     <main class="approval-detail-main">
         <div class="background-overlay"></div>
 
-        <!-- ═══════════════════════════════════════════════════════════
-             HEADER BAR — Course Info + School Logo
-        ═══════════════════════════════════════════════════════════ -->
+        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+             HEADER BAR â€” Course Info + School Logo
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <header class="approval-detail-header">
             <div class="ad-header-logo">
                 <img src="/common/img/schoolLogo.png" alt="School Logo">
@@ -41,12 +41,12 @@
             </div>
         </header>
 
-        <!-- ═══════════════════════════════════════════════════════════
-             BODY LAYOUT — Left (Document) + Right (Sidebar Panel)
-        ═══════════════════════════════════════════════════════════ -->
+        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+             BODY LAYOUT â€” Left (Document) + Right (Sidebar Panel)
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div class="approval-detail-body">
 
-            <!-- ─── LEFT: Document Preview ──────────────────────────── -->
+            <!-- â”€â”€â”€ LEFT: Document Preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
             <section class="ad-document-panel">
 
                 <!-- Back button -->
@@ -60,17 +60,17 @@
 
                 <h2 class="ad-section-title"><%= locals.courseName || '[COURSE NAME]' %></h2>
 
-                <!-- ── Document Read-Only Preview ── -->
+                <!-- â”€â”€ Document Read-Only Preview â”€â”€ -->
                 <div class="ad-document-preview ad-doc-content">
                     
-                    <h3 class="ad-section-heading">Course Details</h3>
+                    <h3 class="ad-section-heading" data-section-key="course_details">Course Details</h3>
                     <table class="ad-data-table ad-data-table-wide">
                         <tr><td style="font-weight:bold; width: 30%; background:#f9f9f9;">Course Code</td><td><%= locals.courseCode %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Course Title</td><td><%= locals.courseName %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">AY / Term</td><td><%= locals.syl && locals.syl.schoolYear ? locals.syl.schoolYear : '' %> / <%= locals.syl && locals.syl.term ? locals.syl.term : '' %></td></tr>
                     </table>
 
-                    <h3 class="ad-section-heading">Program Educational Objectives (PEO)</h3>
+                    <h3 class="ad-section-heading" data-section-key="peo">Program Educational Objectives (PEO)</h3>
                     <% if (locals.peos && locals.peos.length > 0 && locals.peos[0].description) { %>
                         <table class="ad-data-table">
                             <thead>
@@ -102,7 +102,7 @@
                         <p class="ad-no-content">No program educational objectives provided.</p>
                     <% } %>
 
-                    <h3 class="ad-section-heading">Student Outcomes (SO)</h3>
+                    <h3 class="ad-section-heading" data-section-key="so">Student Outcomes (SO)</h3>
                     <% if (locals.seos && locals.seos.length > 0 && locals.seos[0].description) { %>
                         <table class="ad-data-table">
                             <thead>
@@ -135,7 +135,7 @@
                         <p class="ad-no-content">No student outcomes provided.</p>
                     <% } %>
 
-                    <h3 class="ad-section-heading">Course Outcomes (CO)</h3>
+                    <h3 class="ad-section-heading" data-section-key="co">Course Outcomes (CO)</h3>
                     <% if (locals.cos && locals.cos.length > 0) { %>
                         <table class="ad-data-table">
                             <thead>
@@ -159,7 +159,7 @@
                         <p class="ad-no-content">No course outcomes provided.</p>
                     <% } %>
 
-                    <h3 class="ad-section-heading">Course Mapping</h3>
+                    <h3 class="ad-section-heading" data-section-key="mapping">Course Mapping</h3>
                     <% if (locals.mappings && locals.mappings.length > 0) { %>
                         <table class="ad-data-table" style="text-align: center;">
                             <thead>
@@ -194,7 +194,7 @@
                         <p class="ad-no-content">No course mappings provided.</p>
                     <% } %>
 
-                    <h3 class="ad-section-heading">Concept Map</h3>
+                    <h3 class="ad-section-heading" data-section-key="concept_map">Concept Map</h3>
                     <% if (locals.syl && locals.syl.conceptMap) { %>
                         <div class="ad-concept-map">
                             <img src="<%= locals.syl.conceptMap %>" alt="Concept Map">
@@ -203,7 +203,7 @@
                         <p class="ad-no-content">No concept map image provided.</p>
                     <% } %>
 
-                    <h3 class="ad-section-heading">Course Schedule</h3>
+                    <h3 class="ad-section-heading" data-section-key="schedule">Course Schedule</h3>
                     <% if (locals.schedules && locals.schedules.length > 0) { %>
                         <table class="ad-data-table" style="font-size: 0.85rem;">
                             <thead>
@@ -235,7 +235,7 @@
                         <p class="ad-no-content">No schedule provided.</p>
                     <% } %>
 
-                    <h3 class="ad-section-heading">Course Evaluation</h3>
+                    <h3 class="ad-section-heading" data-section-key="evaluation">Course Evaluation</h3>
                     <% if (locals.evaluations && locals.evaluations.length > 0) { %>
                         <p style="font-size:0.85rem; color:#555; margin-bottom:10px;">The final grade of the student is based on the following components:</p>
                         <table class="ad-data-table" style="font-size: 0.85rem; text-align:center;">
@@ -268,7 +268,7 @@
                         <p class="ad-no-content">No course evaluation provided.</p>
                     <% } %>
 
-                    <h3 class="ad-section-heading">Course Outcomes Assessment</h3>
+                    <h3 class="ad-section-heading" data-section-key="assessment">Course Outcomes Assessment</h3>
                     <% if (locals.cos && locals.cos.length > 0) { %>
                         <p style="font-size:0.85rem; color:#555; margin-bottom:10px;">Achievement of course outcomes is based on the following:</p>
                         <table class="ad-data-table" style="font-size: 0.85rem;">
@@ -293,7 +293,7 @@
                         <p class="ad-no-content">No course outcomes assessment provided.</p>
                     <% } %>
 
-                    <!-- ── Signature Block for PDF Export ── -->
+                    <!-- â”€â”€ Signature Block for PDF Export â”€â”€ -->
                     <div id="document-signature-section" style="margin-top:2rem; padding-top:1.5rem; border-top:2px solid #e0e0e0; page-break-inside: avoid;">
                         <div style="display:flex; justify-content:space-evenly; gap:2rem; flex-wrap:wrap;">
                             <% const isPcPreparer = locals.facultySignatoryName && locals.pcSignatoryName && (locals.facultySignatoryName === locals.pcSignatoryName); %>
@@ -356,12 +356,12 @@
                 </div>
             </section>
 
-            <!-- ─── RIGHT: Approval Sidebar ─────────────────────────── -->
+            <!-- â”€â”€â”€ RIGHT: Approval Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
             <aside class="ad-sidebar">
 
                 <h3 class="ad-sidebar-title">Dean Endorsement</h3>
 
-                <!-- ── Approval Progress Tracker ── -->
+                <!-- â”€â”€ Approval Progress Tracker â”€â”€ -->
                 <div class="ad-tracker">
                     <% const steps=[ { role: 'Faculty' , label: 'Submitted' , status: 'approved' }, { role: 'Program Chair' , label: 'Endorsed' ,
                         status: 'approved' }, { role: 'Dean' , label: 'On-Going' , status: 'ongoing' }, { role: 'HR' ,
@@ -387,14 +387,14 @@
                         </div>
                 </div>
 
-                <!-- ── Comments ── -->
+                <!-- â”€â”€ Comments â”€â”€ -->
                 <div class="ad-sidebar-section">
                     <label class="ad-sidebar-label">Comments</label>
                     <textarea id="approval-comments" class="ad-comments-box" rows="5"
                         placeholder="Add approval remarks..."></textarea>
                 </div>
 
-                <!-- ── Status Dropdown ── -->
+                <!-- â”€â”€ Status Dropdown â”€â”€ -->
                 <div class="ad-sidebar-section">
                     <label class="ad-sidebar-label">Status</label>
                     <div class="ad-status-select-wrapper">
@@ -406,10 +406,11 @@
                     </div>
                 </div>
 
-                <!-- ── Signature Box ── -->
+                <!-- â”€â”€ Signature Box â”€â”€ -->
                 <div class="ad-sidebar-section" id="signature-section">
                     <label class="ad-sidebar-label">Signatory Name</label>
                     <input type="text" id="signatory-name-input" class="ad-comments-box" 
+                        value="<%= locals.deanSignatoryName || (locals.user ? locals.user.firstName + ' ' + locals.user.lastName : '') %>"
                         placeholder="e.g. Dr. Juan dela Cruz" 
                         style="margin-bottom: 15px; padding: 10px 12px; height: 40px; box-sizing: border-box;">
 
@@ -445,7 +446,7 @@
                     </div>
                 </div>
 
-                <!-- ── Action Buttons ── -->
+                <!-- â”€â”€ Action Buttons â”€â”€ -->
                 <div class="ad-sidebar-actions">
                     <button type="button" class="ad-btn-action ad-btn-pdf" id="btn-save-pdf">
                         <span class="material-symbols-outlined">picture_as_pdf</span>
@@ -459,9 +460,12 @@
         </div>
     </main>
 
-    <!-- ═══════════════════════════════════════════════════════════
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
          Hidden data attributes for JS
-    ═══════════════════════════════════════════════════════════ -->
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <script type="application/json" id="section-comments-data">
+        <%- JSON.stringify(locals.sectionComments || []) %>
+    </script>
     <script>
         const SYLLABUS_APPROVAL_DATA = {
             syllabusId: '<%= locals.syllabusId || "" %>',
@@ -473,7 +477,8 @@
             optionApproveValue: 'Approved'
         };
     </script>
-    <script src="/Syllabus/js/syllabusApprovalDetail.js"></script>
+    <script src="/Syllabus/js/syllabusApprovalDetail.js?v=3"></script>
+    <script src="/Syllabus/js/sectionComments.js?v=2"></script>
 </body>
 
 </html>

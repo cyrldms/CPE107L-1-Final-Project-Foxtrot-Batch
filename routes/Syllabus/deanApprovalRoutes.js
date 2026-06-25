@@ -1,4 +1,5 @@
 import express from 'express';
+import fs from 'fs';
 import Syllabus from '../../models/Syllabus/syllabus.js';
 
 import SyllabusApprovalStatus from '../../models/Syllabus/syllabusApprovalStatus.js';
@@ -7,6 +8,7 @@ import StudentEducationObjectives from '../../models/Syllabus/studentEducational
 import CourseOutcomes from '../../models/Syllabus/courseOutcomes.js';
 import CourseMapping from '../../models/Syllabus/courseMapping.js';
 import WeeklySchedule from '../../models/Syllabus/weeklySchedule.js';
+import mongoose from 'mongoose';
 import CourseEvaluationPerCO from '../../models/Syllabus/courseEvaluationPerCO.js';
 
 const deanApprovalRouter = express.Router();
@@ -19,8 +21,13 @@ deanApprovalRouter.get('/:syllabusId', async (req, res) => {
 
     try {
         const syl = await Syllabus.findById(syllabusId).populate('assignedInstructor');
-        const approval = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId });
-
+        const approval = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId }).lean();
+        fs.writeFileSync('debug_approval.json', JSON.stringify({
+            syllabusId,
+            approvalFound: !!approval,
+            approvalId: approval ? approval._id : null,
+            sectionComments: approval ? approval.sectionComments : null
+        }, null, 2));
         if (syl) {
             const peos = await ProgramEducationObjectives.find({ syllabusID: syllabusId });
             const seos = await StudentEducationObjectives.find({ syllabusID: syllabusId });
@@ -53,6 +60,7 @@ deanApprovalRouter.get('/:syllabusId', async (req, res) => {
                 pcSignatoryName: approval ? (approval.PC_SignatoryName || '') : '',
                 facultySignature: approval ? (approval.Faculty_Signature || null) : null,
                 facultySignatoryName: approval ? (approval.Faculty_SignatoryName || '') : '',
+                sectionComments: approval ? (approval.sectionComments || []) : [],
                 user: req.session.user
             });
         }
@@ -79,6 +87,13 @@ deanApprovalRouter.post('/:syllabusId', async (req, res) => {
 
         if (action === 'draft') {
             await approval.save();
+            if (req.body.sectionComments !== undefined) {
+                await SyllabusApprovalStatus.updateOne(
+                    { syllabusID: syllabusId },
+                    { $set: { sectionComments: req.body.sectionComments } },
+                    { strict: false }
+                );
+            }
             return res.json({ success: true, message: 'Approval draft saved.' });
         }
 
@@ -97,6 +112,13 @@ deanApprovalRouter.post('/:syllabusId', async (req, res) => {
         }
 
         await approval.save();
+        if (req.body.sectionComments !== undefined) {
+            await SyllabusApprovalStatus.updateOne(
+                { syllabusID: syllabusId },
+                { $set: { sectionComments: req.body.sectionComments } },
+                { strict: false }
+            );
+        }
         res.json({ success: true, message: status === 'Returned' || status === 'Returned to PC' ? 'Returned to Faculty.' : 'Approval submitted.' });
     } catch (err) {
         console.error('Dean approval action error:', err);

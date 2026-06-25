@@ -239,11 +239,12 @@ scheduleSyllabusRoutes.post('/submit', async (req, res) => {
             approvalData.Faculty_Signature = reqSignatureData;
         }
 
-        approvalData.status = initialStatus;
-        approvalData.remarks = initialRemarks;
-
-        const approval = new SyllabusApprovalStatus(approvalData);
-        await approval.save();
+        if (userRole === 'Program-Chair' || userRole === 'program-chair' || userRole === 'Dean' || userRole === 'dean') {
+            approvalData.status = initialStatus;
+            approvalData.remarks = initialRemarks;
+            const approval = new SyllabusApprovalStatus(approvalData);
+            await approval.save();
+        }
 
         res.json({ success: true, syllabusId: syllabusID });
     } catch (error) {

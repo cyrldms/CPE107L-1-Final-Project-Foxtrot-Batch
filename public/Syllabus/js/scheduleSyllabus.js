@@ -2,6 +2,53 @@ let isSelecting = false;
 let startCell = null;
 let currentRange = { minR: -1, maxR: -1, minC: -1, maxC: -1 };
 
+function getAuthoritativeCourseOutcomes() {
+    const key = `syllabusFormDraft_${window.CURRENT_SYLLABUS_ID || 'default'}`;
+    const draftStr = sessionStorage.getItem(key);
+    if (draftStr) {
+        try {
+            const draft = JSON.parse(draftStr);
+            if (draft.courseOutcomesEditor && draft.courseOutcomesEditor.length > 0) {
+                return draft.courseOutcomesEditor.map(co => co.coNumber).filter(v => !!v);
+            }
+        } catch (e) {
+            console.error("Error parsing syllabusFormDraft for COs", e);
+        }
+    }
+    
+    // Fallback to server data
+    if (window.SERVER_SYLLABUS_DATA && window.SERVER_SYLLABUS_DATA.syl && window.SERVER_SYLLABUS_DATA.syl.CourseOutcomes) {
+        // Not directly accessible if it's an ObjectId reference array, but `assessment` has the populated ones
+    }
+    if (window.SERVER_SYLLABUS_DATA && window.SERVER_SYLLABUS_DATA.assessment && window.SERVER_SYLLABUS_DATA.assessment.length > 0) {
+        return window.SERVER_SYLLABUS_DATA.assessment.map(co => co.coNumber).filter(v => !!v);
+    }
+    return [];
+}
+
+function setCellData(cell, value, useHTML = false) {
+    if (!cell) return;
+    
+    const strValue = (value === null || value === undefined) ? '' : String(value);
+    
+    const sel = cell.querySelector('select.co-dropdown');
+    if (sel) {
+        let valToSet = useHTML ? strValue.replace(/<[^>]*>?/gm, '').trim() : strValue.trim();
+        let exists = Array.from(sel.options).some(opt => opt.value === valToSet);
+        if (!exists && valToSet !== '') {
+            const newOpt = document.createElement('option');
+            newOpt.value = valToSet;
+            newOpt.text = valToSet;
+            sel.appendChild(newOpt);
+        }
+        sel.value = valToSet;
+        sel.style.color = sel.value ? '#000' : '#888';
+    } else {
+        if (useHTML) cell.innerHTML = strValue;
+        else cell.innerText = strValue;
+    }
+}
+
 function addScheduleRow() {
     const tbody = document.getElementById('schedule-editor-body');
     addRow(tbody, 12);
@@ -29,7 +76,58 @@ function addRow(tbody, colCount) {
 
         const div = document.createElement('div');
         div.className = 'editable-cell';
-        div.contentEditable = 'true';
+        
+        const isTargetCOCol = (tbody.id === 'schedule-editor-body' && i === 1) ||
+                              (tbody.id === 'evaluation-editor-body' && i === 1) ||
+                              (tbody.id === 'assessment-editor-body' && i === 0);
+
+        if (isTargetCOCol) {
+            div.contentEditable = 'false';
+            const select = document.createElement('select');
+            select.className = 'co-dropdown';
+            select.style.width = '100%';
+            select.style.border = 'none';
+            select.style.backgroundColor = 'transparent';
+            select.style.outline = 'none';
+            select.style.textAlign = 'center';
+            select.style.fontFamily = 'inherit';
+            select.style.fontSize = 'inherit';
+            select.style.cursor = 'pointer';
+            select.style.color = '#888'; // Initial gray color for placeholder
+            
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            // For Evaluation table, use #. For others, use - Select -
+            defaultOpt.text = (tbody.id === 'evaluation-editor-body') ? '#' : '- Select -';
+            defaultOpt.style.color = '#888';
+            select.appendChild(defaultOpt);
+
+            const cos = getAuthoritativeCourseOutcomes();
+            cos.forEach(co => {
+                const opt = document.createElement('option');
+                opt.value = co;
+                opt.text = co;
+                opt.style.color = '#000'; // Real options are black
+                select.appendChild(opt);
+            });
+            
+            select.addEventListener('mousedown', (e) => e.stopPropagation());
+            select.addEventListener('change', (e) => {
+                // Change color based on selection
+                select.style.color = select.value ? '#000' : '#888';
+                autoSaveSchedule();
+            });
+            div.appendChild(select);
+        } else {
+            // Req 7: Lock Date Covered if syllabus is Archived
+            if (tbody.id === 'schedule-editor-body' && i === 11 && window.SYLLABUS_STATUS === 'Archived') {
+                div.contentEditable = 'false';
+                div.style.backgroundColor = '#f4f4f4';
+                div.title = 'Date Covered cannot be edited after the syllabus is finalized (Archived).';
+            } else {
+                div.contentEditable = 'true';
+            }
+        }
 
         // Input Restrictions [cite: 173]
         div.addEventListener('keydown', (e) => {
@@ -492,11 +590,20 @@ function applyActiveColor() {
 function autoSaveSchedule() {
     const data = {
         schedule: Array.from(document.querySelectorAll('#schedule-editor-body tr')).map(row =>
-            Array.from(row.querySelectorAll('.editable-cell')).map(cell => cell.innerHTML)),
+            Array.from(row.querySelectorAll('.editable-cell')).map(cell => {
+                const sel = cell.querySelector('select.co-dropdown');
+                return sel ? sel.value : cell.innerHTML;
+            })),
         evaluation: Array.from(document.querySelectorAll('#evaluation-editor-body tr')).map(row =>
-            Array.from(row.querySelectorAll('.editable-cell')).map(cell => cell.innerHTML)),
+            Array.from(row.querySelectorAll('.editable-cell')).map(cell => {
+                const sel = cell.querySelector('select.co-dropdown');
+                return sel ? sel.value : cell.innerHTML;
+            })),
         assessment: Array.from(document.querySelectorAll('#assessment-editor-body tr')).map(row =>
-            Array.from(row.querySelectorAll('.editable-cell')).map(cell => cell.innerHTML))
+            Array.from(row.querySelectorAll('.editable-cell')).map(cell => {
+                const sel = cell.querySelector('select.co-dropdown');
+                return sel ? sel.value : cell.innerHTML;
+            }))
     };
     const key = `syllabus_draft_schedule_${window.CURRENT_SYLLABUS_ID || 'default'}`;
     sessionStorage.setItem(key, JSON.stringify(data));
@@ -522,7 +629,9 @@ function loadSchedule() {
                 t.func();
                 const lastRow = body.lastElementChild;
                 const cells = lastRow.querySelectorAll('.editable-cell');
-                rowContent.forEach((html, i) => { if (cells[i]) cells[i].innerHTML = html; });
+                rowContent.forEach((html, i) => { 
+                    if (cells[i]) setCellData(cells[i], html, true); 
+                });
             });
         }
     });
@@ -748,14 +857,14 @@ window.submitSyllabus = async function () {
             return;
         }
 
-        let scheduleFilled = false;
         payload.weeklySchedule = Array.from(scheduleRows)
-            .filter(r => r.style.display !== 'none') // skip hidden merged cells
+            .filter(r => r.style.display !== 'none')
             .map(row => {
                 const cells = row.querySelectorAll('.editable-cell');
-                const rowData = {
+                const coDropdown = cells[1]?.querySelector('select.co-dropdown');
+                return {
                     week: cells[0]?.innerText.trim() || '',
-                    coNumber: cells[1]?.innerText.trim() || '',
+                    coNumber: coDropdown ? coDropdown.value : (cells[1]?.innerText.trim() || ''),
                     moNumber: cells[2]?.innerText.trim() || '',
                     iloNumber: cells[3]?.innerText.trim() || '',
                     coverageDay: cells[4]?.innerText.trim() || '',
@@ -767,30 +876,30 @@ window.submitSyllabus = async function () {
                     referenceNum: cells[10]?.innerText.trim() || '',
                     dateCovered: cells[11]?.innerText.trim() || ''
                 };
-                if (rowData.week || rowData.coverageTopic) scheduleFilled = true;
-                return rowData;
-            });
+            })
+            .filter(data => 
+                data.week || data.coNumber || data.moNumber || data.iloNumber || 
+                data.coverageDay || data.coverageTopic || data.tlaMode || 
+                data.tlaActivities || data.assessmentTaskMode || data.assessmentTaskTask || 
+                data.referenceNum || data.dateCovered
+            );
 
-        if (!scheduleFilled) {
+        if (payload.weeklySchedule.length === 0) {
             alert("All fields are required.");
             return;
         }
 
         // 3. Course Evaluation Table Validation
         const evalRows = document.querySelectorAll('#evaluation-editor-body tr');
-        if (evalRows.length === 0) {
-            alert("All fields are required.");
-            return;
-        }
-
         let evalFilled = false;
         payload.courseEvaluation = Array.from(evalRows)
             .filter(r => r.style.display !== 'none')
             .map(row => {
                 const cells = row.querySelectorAll('.editable-cell');
+                const coDropdown = cells[1]?.querySelector('select.co-dropdown');
                 const rowData = {
                     moduleCode: cells[0]?.innerText.trim() || '',
-                    coNumber: cells[1]?.innerText.trim() || '',
+                    coNumber: coDropdown ? coDropdown.value : (cells[1]?.innerText.trim() || ''),
                     mediatingOutcome: cells[2]?.innerText.trim() || '',
                     assessmentWeightLT: cells[3]?.innerText.trim() || '',
                     assessmentWeightPE: cells[4]?.innerText.trim() || '',
@@ -818,8 +927,9 @@ window.submitSyllabus = async function () {
             .filter(r => r.style.display !== 'none')
             .map(row => {
                 const cells = row.querySelectorAll('.editable-cell');
+                const coDropdown = cells[0]?.querySelector('select.co-dropdown');
                 const rowData = {
-                    coNumber: cells[0]?.innerText.trim() || '',
+                    coNumber: coDropdown ? coDropdown.value : (cells[0]?.innerText.trim() || ''),
                     assessmentTasks: cells[1]?.innerText.trim() || '',
                     minSatisfactoryPerf: cells[2]?.innerText.trim() || ''
                 };
@@ -868,8 +978,14 @@ async function executeFinalSubmit(payload) {
         const result = await fetchResponse.json();
 
         if (result.success) {
-            const key = `syllabusFormDraft_${window.CURRENT_SYLLABUS_ID || 'default'}`;
-            sessionStorage.removeItem(key);
+            const draftKey = `syllabusFormDraft_${window.CURRENT_SYLLABUS_ID || 'default'}`;
+            const scheduleKey = `syllabus_draft_schedule_${window.CURRENT_SYLLABUS_ID || 'default'}`;
+            const infoKey = `syllabus_draft_info_${window.CURRENT_SYLLABUS_ID || 'default'}`;
+            
+            sessionStorage.removeItem(draftKey);
+            sessionStorage.removeItem(scheduleKey);
+            sessionStorage.removeItem(infoKey);
+            
             alert('Syllabus successfully compiled and submitted for review!');
 
             // Role-based redirection
@@ -905,18 +1021,18 @@ function loadFromServer() {
             const lastRow = scheduleBody.lastElementChild;
             const cells = lastRow.querySelectorAll('.editable-cell');
             if (cells.length >= 12) {
-                cells[0].innerText = item.week || "";
-                cells[1].innerText = item.outcomeCo || "";
-                cells[2].innerText = item.outcomeMo || "";
-                cells[3].innerText = item.outcomeIlo || "";
-                cells[4].innerText = item.coverageDay || "";
-                cells[5].innerText = item.coverageTopic || "";
-                cells[6].innerText = item.tlaMode || "";
-                cells[7].innerText = item.tlaActivities || "";
-                cells[8].innerText = item.assessmentTaskMode || "";
-                cells[9].innerText = item.assessmentTaskTask || "";
-                cells[10].innerText = item.referenceNum || "";
-                cells[11].innerText = item.dateCovered || "";
+                setCellData(cells[0], item.week || "");
+                setCellData(cells[1], item.outcomeCo || "");
+                setCellData(cells[2], item.outcomeMo || "");
+                setCellData(cells[3], item.outcomeIlo || "");
+                setCellData(cells[4], item.coverageDay || "");
+                setCellData(cells[5], item.coverageTopic || "");
+                setCellData(cells[6], item.tlaMode || "");
+                setCellData(cells[7], item.tlaActivities || "");
+                setCellData(cells[8], item.assessmentTaskMode || "");
+                setCellData(cells[9], item.assessmentTaskTask || "");
+                setCellData(cells[10], item.referenceNum || "");
+                setCellData(cells[11], item.dateCovered || "");
             }
         });
     }
@@ -930,13 +1046,13 @@ function loadFromServer() {
             const lastRow = evalBody.lastElementChild;
             const cells = lastRow.querySelectorAll('.editable-cell');
             if (cells.length >= 7) {
-                cells[0].innerText = item.moduleCode || "";
-                cells[1].innerText = item.coNumber || "";
-                cells[2].innerText = item.mediatingOutcome || "";
-                cells[3].innerText = item.onlineTaskWeight || "0";
-                cells[4].innerText = item.longExaminationWeight || "0";
-                cells[5].innerText = item.moduleWeight || "0";
-                cells[6].innerText = item.finalWeight || "0";
+                setCellData(cells[0], item.moduleCode || "");
+                setCellData(cells[1], item.coNumber || "");
+                setCellData(cells[2], item.mediatingOutcome || "");
+                setCellData(cells[3], item.onlineTaskWeight || "0");
+                setCellData(cells[4], item.longExaminationWeight || "0");
+                setCellData(cells[5], item.moduleWeight || "0");
+                setCellData(cells[6], item.finalWeight || "0");
             }
         });
     }
@@ -950,9 +1066,9 @@ function loadFromServer() {
             const lastRow = assessmentBody.lastElementChild;
             const cells = lastRow.querySelectorAll('.editable-cell');
             if (cells.length >= 3) {
-                cells[0].innerText = item.coNumber || "";
-                cells[1].innerText = item.assessmentTasks || "";
-                cells[2].innerText = item.minSatisfactoryPerf || "0";
+                setCellData(cells[0], item.coNumber || "");
+                setCellData(cells[1], item.assessmentTasks || "");
+                setCellData(cells[2], item.minSatisfactoryPerf || "0");
             }
         });
     }
@@ -971,7 +1087,7 @@ function loadFromSession() {
             addScheduleRow();
             const lastRow = scheduleBody.lastElementChild;
             const targetCells = lastRow.querySelectorAll('.editable-cell');
-            rowCells.forEach((html, i) => { if (targetCells[i]) targetCells[i].innerHTML = html; });
+            rowCells.forEach((html, i) => { if (targetCells[i]) setCellData(targetCells[i], html, true); });
         });
     }
 
@@ -982,7 +1098,7 @@ function loadFromSession() {
             addEvaluationRow();
             const lastRow = evalBody.lastElementChild;
             const targetCells = lastRow.querySelectorAll('.editable-cell');
-            rowCells.forEach((html, i) => { if (targetCells[i]) targetCells[i].innerHTML = html; });
+            rowCells.forEach((html, i) => { if (targetCells[i]) setCellData(targetCells[i], html, true); });
         });
     }
 
@@ -993,7 +1109,7 @@ function loadFromSession() {
             addAssessmentRow();
             const lastRow = assessmentBody.lastElementChild;
             const targetCells = lastRow.querySelectorAll('.editable-cell');
-            rowCells.forEach((html, i) => { if (targetCells[i]) targetCells[i].innerHTML = html; });
+            rowCells.forEach((html, i) => { if (targetCells[i]) setCellData(targetCells[i], html, true); });
         });
     }
 }

@@ -139,9 +139,9 @@
                 %>
                     <tr>
                         <td><%= (idx + 1) %>. <%= desc %></td>
-                        <td class="check-col"><%= rating.includes('A') ? '✓' : '' %></td>
-                        <td class="check-col"><%= rating.includes('B') ? '✓' : '' %></td>
-                        <td class="check-col"><%= rating.includes('C') ? '✓' : '' %></td>
+                        <td class="check-col"><%= rating[0] === '1' ? '✓' : '' %></td>
+                        <td class="check-col"><%= rating[1] === '1' ? '✓' : '' %></td>
+                        <td class="check-col"><%= rating[2] === '1' ? '✓' : '' %></td>
                     </tr>
                 <% }); %>
             <% } else { %>
@@ -171,9 +171,9 @@
                 %>
                     <tr>
                         <td><%= String.fromCharCode(97 + idx) %>. <%= desc %></td>
-                        <td class="check-col"><%= rating.includes('1') ? '✓' : '' %></td>
-                        <td class="check-col"><%= rating.includes('2') ? '✓' : '' %></td>
-                        <td class="check-col"><%= rating.includes('3') ? '✓' : '' %></td>
+                        <td class="check-col"><%= rating[0] === '1' ? '✓' : '' %></td>
+                        <td class="check-col"><%= rating[1] === '1' ? '✓' : '' %></td>
+                        <td class="check-col"><%= rating[2] === '1' ? '✓' : '' %></td>
                     </tr>
                 <% }); %>
             <% } else { %>
@@ -212,9 +212,14 @@
             <div class="info-value"><%= syl.units || 'N/A' %></div>
         </div>
         <div class="course-info-row">
-            <div class="info-label">CLASS SCHEDULE</div>
+            <div class="info-label">LECTURE HOURS PER WEEK</div>
             <div class="info-colon">:</div>
-            <div class="info-value"><%= syl.classSchedule || 'Not set' %></div>
+            <div class="info-value"><%= syl.classSchedule || '0' %></div>
+        </div>
+        <div class="course-info-row">
+            <div class="info-label">LABORATORY HOURS PER WEEK</div>
+            <div class="info-colon">:</div>
+            <div class="info-value">0</div>
         </div>
         <div class="course-info-row">
             <div class="info-label">COURSE DESIGN</div>
@@ -336,8 +341,8 @@
                 <th>Module</th>
                 <th>CO</th>
                 <th>Mediating Outcomes / Tasks</th>
-                <th>LT%</th>
-                <th>PE%</th>
+                <th style="color: black;">FA%</th>
+                <th style="color: black;">SA%</th>
                 <th>Mod%</th>
                 <th>Final%</th>
             </tr>

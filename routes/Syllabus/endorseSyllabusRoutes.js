@@ -9,6 +9,7 @@ import StudentEducationObjectives from '../../models/Syllabus/studentEducational
 import CourseOutcomes from '../../models/Syllabus/courseOutcomes.js';
 import CourseMapping from '../../models/Syllabus/courseMapping.js';
 import WeeklySchedule from '../../models/Syllabus/weeklySchedule.js';
+
 import CourseEvaluationPerCO from '../../models/Syllabus/courseEvaluationPerCO.js';
 
 const endorseSyllabusRouter = express.Router();
@@ -343,7 +344,7 @@ endorseSyllabusRouter.get('/approve/:syllabusId', async (req, res) => {
         }
 
         const syl = await Syllabus.findById(syllabusId).populate('assignedInstructor');
-        const approval = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId });
+        const approval = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId }).lean();
 
         if (syl) {
             const peos = await ProgramEducationObjectives.find({ syllabusID: syllabusId });
@@ -370,6 +371,7 @@ endorseSyllabusRouter.get('/approve/:syllabusId', async (req, res) => {
                 currentStatus: approval ? approval.status : 'Pending',
                 approvalState: approval ? approval.approvedBy : null,
                 existingComment: approval ? (approval.PC_Remarks || approval.remarks || '') : '',
+                sectionComments: approval ? (approval.sectionComments || []) : [],
                 currentPageCategory: 'syllabus',
                 actionUrlPrefix: '/syllabus/prog-chair/approve',
                 optionApproveValue: 'PC_Approved', // Value submitted when approved
@@ -420,6 +422,13 @@ endorseSyllabusRouter.post('/approve/:syllabusId', async (req, res) => {
 
         if (action === 'draft') {
             await approval.save();
+            if (req.body.sectionComments !== undefined) {
+                await SyllabusApprovalStatus.updateOne(
+                    { syllabusID: syllabusId },
+                    { $set: { sectionComments: req.body.sectionComments } },
+                    { strict: false }
+                );
+            }
             return res.json({ success: true, message: 'Draft remarks saved successfully.' });
         }
 
@@ -441,6 +450,13 @@ endorseSyllabusRouter.post('/approve/:syllabusId', async (req, res) => {
         }
 
         await approval.save();
+        if (req.body.sectionComments !== undefined) {
+            await SyllabusApprovalStatus.updateOne(
+                { syllabusID: syllabusId },
+                { $set: { sectionComments: req.body.sectionComments } },
+                { strict: false }
+            );
+        } 
         res.json({ success: true, message: `Syllabus decision saved.` });
     } catch (err) {
         console.error('PC Approval action error:', err);
@@ -644,6 +660,13 @@ endorseSyllabusRouter.post('/endorse/:syllabusId', async (req, res) => {
 
         if (action === 'draft') {
             await approval.save();
+            if (req.body.sectionComments !== undefined) {
+                await SyllabusApprovalStatus.updateOne(
+                    { syllabusID: syllabusId },
+                    { $set: { sectionComments: req.body.sectionComments } },
+                    { strict: false }
+                );
+            }
             return res.json({ success: true, message: 'Endorsement draft saved.' });
         }
 
@@ -663,6 +686,13 @@ endorseSyllabusRouter.post('/endorse/:syllabusId', async (req, res) => {
         }
 
         await approval.save();
+        if (req.body.sectionComments !== undefined) {
+            await SyllabusApprovalStatus.updateOne(
+                { syllabusID: syllabusId },
+                { $set: { sectionComments: req.body.sectionComments } },
+                { strict: false }
+            );
+        }
         res.json({ success: true, message: status === 'Rejected' ? 'Syllabus returned to faculty.' : 'Endorsement submitted.' });
     } catch (err) {
         console.error('PC endorsement action error:', err);

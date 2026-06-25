@@ -29,7 +29,14 @@ window.submitSyllabus = async function() {
                     referenceNum: cells[10]?.innerText.trim() || '',
                     dateCovered: cells[11]?.innerText.trim() || ''
                 };
-            });
+                return rowData;
+            })
+            .filter(data => 
+                data.week || data.coNumber || data.moNumber || data.iloNumber || 
+                data.coverageDay || data.coverageTopic || data.tlaMode || 
+                data.tlaActivities || data.assessmentTaskMode || data.assessmentTaskTask || 
+                data.referenceNum || data.dateCovered
+            );
 
         // 3. Course Evaluation Table
         const evalRows = document.querySelectorAll('#evaluation-editor-body tr');

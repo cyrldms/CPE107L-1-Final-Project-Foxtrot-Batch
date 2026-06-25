@@ -9,6 +9,7 @@ import CourseOutcomes from '../../models/Syllabus/courseOutcomes.js';
 import CourseMapping from '../../models/Syllabus/courseMapping.js';
 import WeeklySchedule from '../../models/Syllabus/weeklySchedule.js';
 
+
 import CourseEvaluationPerCO from '../../models/Syllabus/courseEvaluationPerCO.js';
 
 const adminOverviewRouter = express.Router();
@@ -150,7 +151,7 @@ adminOverviewRouter.get('/review/:syllabusId', async (req, res) => {
     const { syllabusId } = req.params;
 
     try {
-        const approval = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId });
+        let approval = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId }).lean();
         const isDummy = DUMMY_ITEMS.some(d => d.syllabusId === syllabusId);
 
         if (!approval && !isDummy) return res.status(404).send("Approval record not found");
@@ -196,6 +197,7 @@ adminOverviewRouter.get('/review/:syllabusId', async (req, res) => {
             deanSignatoryName: approval ? (approval.Dean_SignatoryName || '') : '',
             facultySignature: approval ? (approval.Faculty_Signature || null) : null,
             facultySignatoryName: approval ? (approval.Faculty_SignatoryName || '') : '',
+            sectionComments: approval ? (approval.sectionComments || []) : [],
             syl: course,
             currentPageCategory: 'syllabus',
             user: req.session.user
@@ -226,6 +228,13 @@ adminOverviewRouter.post('/archive/:syllabusId', async (req, res) => {
             record.status = 'Returned to Dean';
             record.HR_Remarks = remarks || '';
             await record.save();
+            if (req.body.sectionComments !== undefined) {
+                await SyllabusApprovalStatus.updateOne(
+                    { syllabusID: syllabusId },
+                    { $set: { sectionComments: req.body.sectionComments } },
+                    { strict: false }
+                );
+            }
             return res.json({ success: true, message: 'Syllabus returned to Dean successfully.' });
         }
 
@@ -236,6 +245,13 @@ adminOverviewRouter.post('/archive/:syllabusId', async (req, res) => {
         record.HR_Signature = signature || record.HR_Signature;
         record.HR_SignatoryName = signatoryName || record.HR_SignatoryName;
         await record.save();
+        if (req.body.sectionComments !== undefined) {
+            await SyllabusApprovalStatus.updateOne(
+                { syllabusID: syllabusId },
+                { $set: { sectionComments: req.body.sectionComments } },
+                { strict: false }
+            );
+        }
 
         res.json({ success: true, message: 'Syllabus archived successfully.' });
     } catch (err) {

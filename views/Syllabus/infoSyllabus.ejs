@@ -30,7 +30,7 @@
                 </div>
 
                 <div class="syllabus-content-section">
-                    <h2 class="college-header-outside">COURSE SYLLABUS</h2>
+                    <h2 class="college-header-outside" data-section-key="course_details" data-section-name="Course Details">COURSE SYLLABUS</h2>
 
                     <section class="content-panel-transparent">
                         <div class="course-info-container">
@@ -72,14 +72,24 @@
 
                             <div class="info-row">
                                 <div class="info-item">
-                                    <label>CLASS SCHEDULE</label>
-                                    <div class="course-editable-text" contenteditable="true"
-                                        data-placeholder="Enter schedule..."></div>
+                                    <label>NUMBER OF LECTURE HOURS PER WEEK</label>
+                                    <input type="number" class="course-editable-text class-schedule-input lecture-hrs" min="0" step="1" value="0">
                                 </div>
                                 <div class="info-item">
+                                    <label>NUMBER OF LABORATORY HOURS PER WEEK</label>
+                                    <input type="number" class="course-editable-text class-schedule-input lab-hrs" min="0" step="1" value="0">
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-item">
                                     <label>COURSE DESIGN</label>
-                                    <div class="course-editable-text" contenteditable="true"
-                                        data-placeholder="Enter design..."></div>
+                                    <select class="course-editable-text course-design-select" required>
+                                        <option value="" disabled selected>Select Course Design...</option>
+                                        <option value="Lecture">Lecture</option>
+                                        <option value="Laboratory">Laboratory</option>
+                                        <option value="Lecture–Laboratory">Lecture–Laboratory</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -95,7 +105,7 @@
 
                     <section class="content-panel-transparent">
                         <div class="content-card-transparent">
-                            <div class="content-label-simple">COURSE OUTCOMES</div>
+                            <div class="content-label-simple" data-section-key="co" data-section-name="Course Outcomes (CO)">COURSE OUTCOMES</div>
 
                             <div class="outcomes-grid-container" id="outcomes-container">
                                 <div class="outcomes-top-header">
@@ -113,8 +123,15 @@
                                             data-placeholder="Edit text"></div>
                                     </div>
                                     <div class="outcomes-skills-side">
-                                        <div class="outcomes-editable-text" contenteditable="true"
-                                            data-placeholder="e.g. Creating"></div>
+                                        <select class="outcomes-skills-select syllabus-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                                            <option value="" disabled selected>Select Thinking Skill</option>
+                                            <option value="Remembering">Remembering</option>
+                                            <option value="Understanding">Understanding</option>
+                                            <option value="Applying">Applying</option>
+                                            <option value="Analyzing">Analyzing</option>
+                                            <option value="Evaluating">Evaluating</option>
+                                            <option value="Creating">Creating</option>
+                                        </select>
                                     </div>
                                     <button class="btn-delete-row" onclick="deleteCoRow(this)" title="Delete row">
                                         <span class="material-symbols-outlined">remove</span>
@@ -132,7 +149,7 @@
 
                     <section class="content-panel-transparent">
                         <div class="content-card-transparent">
-                            <div class="content-label-simple">COURSE MAPPING</div>
+                            <div class="content-label-simple" data-section-key="mapping" data-section-name="Course Mapping">COURSE MAPPING</div>
                         </div>
                         <div class="course-mapping-container">
                             <table class="mapping-table">
@@ -168,7 +185,7 @@
 
                     <section class="content-panel-transparent">
                         <div class="content-card-transparent">
-                            <div class="content-label-simple">CONCEPT MAP</div>
+                            <div class="content-label-simple" data-section-key="concept_map" data-section-name="Concept Map">CONCEPT MAP</div>
                         </div>
                         <div class="course-mapping-container">
                             <p class="concept-map-instructions">Please attach an image of the course concept map.</p>
@@ -363,15 +380,22 @@
         </main>
     </div>
 
+    <script id="server-data-outcomes" type="application/json"><%- JSON.stringify(locals.outcomes || []) %></script>
+    <script id="server-data-mapping" type="application/json"><%- JSON.stringify(locals.mapping || null) %></script>
+    <script id="server-data-syl" type="application/json"><%- JSON.stringify(locals.syl || {}) %></script>
+    <script type="application/json" id="section-comments-data"><%- JSON.stringify(locals.sectionComments || []) %></script>
+
     <script>
         window.CURRENT_SYLLABUS_ID = "<%= locals.syllabusId || '' %>";
         window.SERVER_SYLLABUS_DATA = {
-            outcomes: <%- JSON.stringify(locals.outcomes || []) %>,
-            mapping: <%- JSON.stringify(locals.mapping || null) %>,
-            syl: <%- JSON.stringify(locals.syl || {}) %>
+            outcomes: JSON.parse(document.getElementById('server-data-outcomes').textContent),
+            mapping: JSON.parse(document.getElementById('server-data-mapping').textContent),
+            syl: JSON.parse(document.getElementById('server-data-syl').textContent)
         };
     </script>
+    <script src="/Syllabus/js/infoSyllabusPayloadTemplate.js"></script>
     <script src="/Syllabus/js/infoSyllabus.js?v=<%= new Date().getTime() %>"></script>
+    <script src="/Syllabus/js/sectionComments.js?v=2"></script>
 </body>
 
 </html>

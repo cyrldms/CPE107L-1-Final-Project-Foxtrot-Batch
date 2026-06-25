@@ -54,7 +54,7 @@ syllabusApprovalTechAsstRouter.get('/', async (req, res) => {
 
         if (approvals.length > 0) {
             const syllabusIds = approvals.map(a => a.syllabusID);
-            let syllabuses = await Syllabus.find({ _id: { $in: syllabusIds } });
+            let syllabuses = await Syllabus.find({ _id: { $in: syllabusIds }, courseCode: { $ne: '__GLOBAL_TEMPLATE__' } });
 
             if (mainDB.models.User) {
                 await Syllabus.populate(syllabuses, { path: 'assignedInstructor' });
