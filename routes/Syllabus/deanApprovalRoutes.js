@@ -41,7 +41,7 @@ deanApprovalRouter.get('/:syllabusId', async (req, res) => {
                 currentPageCategory: 'syllabus',
                 approvalStatus: approval ? approval.status : 'Pending',
                 existingComment: approval ? (approval.Dean_Remarks || '') : '',
-                pcRemarks: approval ? (approval.PC_Remarks || approval.remarks || '') : '',
+                pcRemarks: approval ? (approval.PC_Remarks || (approval.remarks && approval.remarks !== 'Awaiting Faculty Signature' ? approval.remarks : '')) : '',
                 workflowStep: 'approval',
                 optionApproveValue: 'Approved',
                 peos,

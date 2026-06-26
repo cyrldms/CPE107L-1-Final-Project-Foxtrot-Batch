@@ -180,7 +180,7 @@ coursesOverviewFacultyRouter.get('/submit/:syllabusId', async (req, res) => {
                 currentStatus: approval ? approval.status : 'Pending',
                 approvalState: approval ? approval.approvedBy : null,
                 existingComment: '',
-                sectionComments: [],
+                sectionComments: approval && approval.sectionComments ? approval.sectionComments : [],
                 currentPageCategory: 'syllabus',
                 actionUrlPrefix: '/faculty/submit',
                 optionApproveValue: 'Pending',
@@ -229,7 +229,16 @@ coursesOverviewFacultyRouter.post('/submit/:syllabusId', async (req, res) => {
         approval.status = 'Signed by Faculty';
         
         await approval.save();
-        res.redirect('/faculty');
+        
+        if (req.body.sectionComments !== undefined) {
+            await SyllabusApprovalStatus.updateOne(
+                { syllabusID: syllabusId },
+                { $set: { sectionComments: req.body.sectionComments } },
+                { strict: false }
+            );
+        }
+
+        res.json({ success: true, message: 'Submitted successfully' });
     } catch (error) {
         console.error('Error submitting syllabus from faculty:', error);
         res.status(500).send('Internal Server Error');

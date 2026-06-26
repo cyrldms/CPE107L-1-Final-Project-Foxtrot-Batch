@@ -2,6 +2,15 @@
 (function initSectionComments() {
     const isReadOnly = typeof SYLLABUS_APPROVAL_DATA === 'undefined';
 
+    // Helper to get current role string
+    function getCurrentRole() {
+        if (isReadOnly) return null;
+        const rawRole = SYLLABUS_APPROVAL_DATA?.actionLabel;
+        if (rawRole === 'Approval') return 'Dean';
+        if (rawRole === 'Endorsement') return 'Program Chair';
+        return 'Faculty';
+    }
+
     // Load existing comments
     let comments = [];
     const commentsDataEl = document.getElementById('section-comments-data');
@@ -10,9 +19,14 @@
             comments = JSON.parse(commentsDataEl.textContent);
         } catch(e) {}
     }
+    
+    // Add unique IDs to comments if they don't have one (for easy editing/deleting)
+    comments = comments.map(c => {
+        if (!c.id) c.id = 'cmt_' + Math.random().toString(36).substr(2, 9);
+        return c;
+    });
     window.currentSectionComments = comments;
 
-    // Find all elements designated as section targets
     const sections = document.querySelectorAll('[data-section-key]');
     
     sections.forEach((header) => {
@@ -29,180 +43,251 @@
         wrapper.appendChild(header);
         header.style.margin = '0'; // Remove default margin inside wrapper
 
-        const btn = document.createElement('button');
-        btn.type = 'button';
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
         
-        const existingComments = window.currentSectionComments.filter(c => c.sectionKey === sectionKey);
-        const countLabel = existingComments.length > 0 ? ` !` : '';
+        function updateToggleButton() {
+            const existingComments = window.currentSectionComments.filter(c => c.sectionKey === sectionKey);
+            const countLabel = existingComments.length > 0 ? ` (${existingComments.length})` : '';
 
-        btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px; margin-right:4px;">edit_note</span> Section Feedback<strong style="color:red; margin-left:4px;">${countLabel}</strong>`;
-        if (existingComments.length > 0) {
-            btn.style.backgroundColor = '#ffeeba'; // highlight if there's a comment
-            btn.style.borderColor = '#ffc107';
-        } else {
-            btn.style.backgroundColor = '#f9f9f9';
-            btn.style.borderColor = '#ccc';
-        }
-        btn.style.padding = '4px 8px';
-        btn.style.fontSize = '12px';
-        btn.style.borderRadius = '4px';
-        btn.style.borderWidth = '1px';
-        btn.style.borderStyle = 'solid';
-        btn.style.cursor = 'pointer';
-        btn.style.display = 'flex';
-        btn.style.alignItems = 'center';
-        if (isReadOnly && existingComments.length === 0) {
-            return; // Faculty shouldn't see the button if there's no feedback
+            toggleBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px; margin-right:4px;">chat</span> Feedback${countLabel}`;
+            if (existingComments.length > 0) {
+                toggleBtn.style.backgroundColor = '#e3f2fd';
+                toggleBtn.style.color = '#0d47a1';
+                toggleBtn.style.borderColor = '#90caf9';
+            } else {
+                toggleBtn.style.backgroundColor = '#f9f9f9';
+                toggleBtn.style.color = '#555';
+                toggleBtn.style.borderColor = '#ccc';
+            }
         }
 
-        wrapper.appendChild(btn);
+        toggleBtn.style.padding = '4px 8px';
+        toggleBtn.style.fontSize = '12px';
+        toggleBtn.style.borderRadius = '4px';
+        toggleBtn.style.borderWidth = '1px';
+        toggleBtn.style.borderStyle = 'solid';
+        toggleBtn.style.cursor = 'pointer';
+        toggleBtn.style.display = 'flex';
+        toggleBtn.style.alignItems = 'center';
+        
+        updateToggleButton();
 
-        // Comment container
+        // If read-only and no comments, hide button
+        if (isReadOnly && window.currentSectionComments.filter(c => c.sectionKey === sectionKey).length === 0) {
+            toggleBtn.style.display = 'none';
+        }
+
+        wrapper.appendChild(toggleBtn);
+
+        // Comment container (Thread view)
         const commentContainer = document.createElement('div');
         commentContainer.className = 'section-comment-container';
         commentContainer.style.display = 'none';
         commentContainer.style.marginTop = '10px';
         commentContainer.style.marginBottom = '20px';
-        commentContainer.style.padding = '10px';
-        commentContainer.style.backgroundColor = '#fff3cd'; // Light yellow warning color for feedback
-        commentContainer.style.border = '1px solid #ffeeba';
-        commentContainer.style.borderRadius = '4px';
+        commentContainer.style.padding = '15px';
+        commentContainer.style.backgroundColor = '#f8f9fa';
+        commentContainer.style.border = '1px solid #dee2e6';
+        commentContainer.style.borderRadius = '6px';
         
-        // Group existing comments
-        const pcComments = existingComments.filter(c => c.reviewerRole === 'Endorse Syllabus' || c.reviewerRole === 'Program Chair');
-        const deanComments = existingComments.filter(c => c.reviewerRole === 'Approval' || c.reviewerRole === 'Dean' || c.reviewerRole === 'Approve Syllabus');
-        const otherComments = existingComments.filter(c => !['Endorse Syllabus', 'Program Chair', 'Approval', 'Dean', 'Approve Syllabus'].includes(c.reviewerRole));
-
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.style.display = 'flex';
-        buttonsContainer.style.gap = '10px';
-        buttonsContainer.style.marginBottom = '10px';
-        buttonsContainer.style.flexWrap = 'wrap';
-
-        const contentContainer = document.createElement('div');
-
-        function createToggleView(btnText, commentsArray) {
-            if (commentsArray.length === 0) return null;
+        const threadDiv = document.createElement('div');
+        threadDiv.className = 'comment-thread';
+        
+        // Render thread function
+        function renderThread() {
+            threadDiv.innerHTML = '';
+            const sectionCmts = window.currentSectionComments.filter(c => c.sectionKey === sectionKey);
             
-            const tBtn = document.createElement('button');
-            tBtn.type = 'button';
-            tBtn.innerText = btnText;
-            tBtn.style.padding = '6px 12px';
-            tBtn.style.fontSize = '12px';
-            tBtn.style.cursor = 'pointer';
-            tBtn.style.borderRadius = '4px';
-            tBtn.style.border = '1px solid #ccc';
-            tBtn.style.backgroundColor = '#f9f9f9';
-            
-            const viewDiv = document.createElement('div');
-            viewDiv.style.display = 'none';
-            viewDiv.style.padding = '10px';
-            viewDiv.style.backgroundColor = '#fff';
-            viewDiv.style.border = '1px solid #eee';
-            viewDiv.style.borderRadius = '4px';
-            
-            commentsArray.forEach(c => {
-                const p = document.createElement('p');
-                p.style.margin = '0 0 8px 0';
-                p.style.fontSize = '13px';
-                p.innerHTML = `<strong>${c.reviewerName}:</strong> ${c.comment}`;
-                viewDiv.appendChild(p);
-            });
-            
-            buttonsContainer.appendChild(tBtn);
-            contentContainer.appendChild(viewDiv);
-            
-            tBtn.addEventListener('click', () => {
-                const isShowing = viewDiv.style.display === 'block';
-                Array.from(contentContainer.children).forEach(child => child.style.display = 'none');
-                Array.from(buttonsContainer.children).forEach(b => {
-                    if (b.innerText === 'Add Comment') {
-                        b.style.backgroundColor = '#d4edda';
-                        b.style.color = '#155724';
-                        b.style.border = '1px solid #28a745';
-                    } else {
-                        b.style.backgroundColor = '#f9f9f9';
-                        b.style.fontWeight = 'normal';
+            if (sectionCmts.length === 0) {
+                const emptyMsg = document.createElement('p');
+                emptyMsg.innerText = 'No feedback yet.';
+                emptyMsg.style.fontSize = '13px';
+                emptyMsg.style.color = '#6c757d';
+                emptyMsg.style.fontStyle = 'italic';
+                emptyMsg.style.margin = '0 0 10px 0';
+                threadDiv.appendChild(emptyMsg);
+            } else {
+                sectionCmts.forEach(c => {
+                    const cmtBox = document.createElement('div');
+                    cmtBox.style.padding = '10px';
+                    cmtBox.style.marginBottom = '10px';
+                    cmtBox.style.backgroundColor = '#ffffff';
+                    cmtBox.style.border = '1px solid #e9ecef';
+                    cmtBox.style.borderRadius = '4px';
+                    
+                    const headerRow = document.createElement('div');
+                    headerRow.style.display = 'flex';
+                    headerRow.style.justifyContent = 'space-between';
+                    headerRow.style.marginBottom = '6px';
+                    
+                    const metaInfo = document.createElement('div');
+                    metaInfo.innerHTML = `<strong style="color:#495057; font-size:13px;">${c.reviewerName || c.reviewerRole}</strong> <span style="font-size:11px; color:#adb5bd; margin-left:5px;">(${c.reviewerRole})</span>`;
+                    
+                    headerRow.appendChild(metaInfo);
+                    
+                    // Edit/Delete buttons if current user
+                    if (!isReadOnly && getCurrentRole() === c.reviewerRole) {
+                        const actionsDiv = document.createElement('div');
+                        
+                        const editBtn = document.createElement('button');
+                        editBtn.type = 'button';
+                        editBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">edit</span>';
+                        editBtn.style.border = 'none';
+                        editBtn.style.background = 'none';
+                        editBtn.style.cursor = 'pointer';
+                        editBtn.style.color = '#007bff';
+                        editBtn.title = "Edit";
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.type = 'button';
+                        deleteBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">delete</span>';
+                        deleteBtn.style.border = 'none';
+                        deleteBtn.style.background = 'none';
+                        deleteBtn.style.cursor = 'pointer';
+                        deleteBtn.style.color = '#dc3545';
+                        deleteBtn.style.marginLeft = '5px';
+                        deleteBtn.title = "Delete";
+                        
+                        actionsDiv.appendChild(editBtn);
+                        actionsDiv.appendChild(deleteBtn);
+                        headerRow.appendChild(actionsDiv);
+                        
+                        // Edit logic
+                        editBtn.addEventListener('click', () => {
+                            textNode.style.display = 'none';
+                            editContainer.style.display = 'block';
+                            editTextarea.focus();
+                        });
+                        
+                        // Delete logic
+                        deleteBtn.addEventListener('click', () => {
+                            if(confirm('Are you sure you want to delete this comment?')) {
+                                window.currentSectionComments = window.currentSectionComments.filter(item => item.id !== c.id);
+                                renderThread();
+                                updateToggleButton();
+                            }
+                        });
                     }
+                    
+                    cmtBox.appendChild(headerRow);
+                    
+                    // Comment text
+                    const textNode = document.createElement('p');
+                    textNode.style.margin = '0';
+                    textNode.style.fontSize = '13px';
+                    textNode.style.color = '#212529';
+                    textNode.style.whiteSpace = 'pre-wrap';
+                    textNode.innerText = c.comment;
+                    cmtBox.appendChild(textNode);
+                    
+                    // Edit container (hidden by default)
+                    const editContainer = document.createElement('div');
+                    editContainer.style.display = 'none';
+                    editContainer.style.marginTop = '8px';
+                    
+                    const editTextarea = document.createElement('textarea');
+                    editTextarea.style.width = '100%';
+                    editTextarea.style.boxSizing = 'border-box';
+                    editTextarea.style.padding = '8px';
+                    editTextarea.style.border = '1px solid #80bdff';
+                    editTextarea.style.borderRadius = '4px';
+                    editTextarea.style.fontSize = '13px';
+                    editTextarea.rows = 3;
+                    editTextarea.value = c.comment;
+                    
+                    const editSaveBtn = document.createElement('button');
+                    editSaveBtn.type = 'button';
+                    editSaveBtn.innerText = 'Save';
+                    editSaveBtn.style.marginTop = '6px';
+                    editSaveBtn.style.padding = '4px 10px';
+                    editSaveBtn.style.backgroundColor = '#007bff';
+                    editSaveBtn.style.color = '#fff';
+                    editSaveBtn.style.border = 'none';
+                    editSaveBtn.style.borderRadius = '4px';
+                    editSaveBtn.style.fontSize = '12px';
+                    editSaveBtn.style.cursor = 'pointer';
+                    
+                    const editCancelBtn = document.createElement('button');
+                    editCancelBtn.type = 'button';
+                    editCancelBtn.innerText = 'Cancel';
+                    editCancelBtn.style.marginTop = '6px';
+                    editCancelBtn.style.marginLeft = '6px';
+                    editCancelBtn.style.padding = '4px 10px';
+                    editCancelBtn.style.backgroundColor = '#6c757d';
+                    editCancelBtn.style.color = '#fff';
+                    editCancelBtn.style.border = 'none';
+                    editCancelBtn.style.borderRadius = '4px';
+                    editCancelBtn.style.fontSize = '12px';
+                    editCancelBtn.style.cursor = 'pointer';
+                    
+                    editSaveBtn.addEventListener('click', () => {
+                        const newVal = editTextarea.value.trim();
+                        if (newVal) {
+                            const target = window.currentSectionComments.find(item => item.id === c.id);
+                            if (target) target.comment = newVal;
+                            renderThread();
+                        }
+                    });
+                    
+                    editCancelBtn.addEventListener('click', () => {
+                        editContainer.style.display = 'none';
+                        textNode.style.display = 'block';
+                        editTextarea.value = c.comment; // reset
+                    });
+                    
+                    editContainer.appendChild(editTextarea);
+                    editContainer.appendChild(editSaveBtn);
+                    editContainer.appendChild(editCancelBtn);
+                    
+                    cmtBox.appendChild(editContainer);
+                    threadDiv.appendChild(cmtBox);
                 });
-                
-                if (!isShowing) {
-                    viewDiv.style.display = 'block';
-                    tBtn.style.backgroundColor = '#e2e6ea';
-                    tBtn.style.fontWeight = 'bold';
-                }
-            });
-            
-            return { btn: tBtn, viewDiv };
+            }
         }
+        
+        commentContainer.appendChild(threadDiv);
 
-        createToggleView('Comments from Program Chair', pcComments);
-        createToggleView('Comments from Dean', deanComments);
-        createToggleView('Other Comments', otherComments);
-
+        // Add new comment UI
         if (!isReadOnly) {
-            const addBtn = document.createElement('button');
-            addBtn.type = 'button';
-            addBtn.innerText = 'Add Comment';
-            addBtn.style.padding = '6px 12px';
-            addBtn.style.fontSize = '12px';
-            addBtn.style.cursor = 'pointer';
-            addBtn.style.borderRadius = '4px';
-            addBtn.style.border = '1px solid #28a745';
-            addBtn.style.backgroundColor = '#d4edda';
-            addBtn.style.color = '#155724';
-            
-            const addView = document.createElement('div');
-            addView.style.display = 'none';
+            const addContainer = document.createElement('div');
+            addContainer.style.marginTop = '15px';
+            addContainer.style.borderTop = '1px dashed #dee2e6';
+            addContainer.style.paddingTop = '15px';
             
             const textarea = document.createElement('textarea');
             textarea.placeholder = `Add feedback for ${sectionName}...`;
             textarea.style.width = '100%';
             textarea.style.boxSizing = 'border-box';
-            textarea.style.padding = '8px';
-            textarea.style.border = '1px solid #ccc';
+            textarea.style.padding = '10px';
+            textarea.style.border = '1px solid #ced4da';
             textarea.style.borderRadius = '4px';
             textarea.style.fontSize = '13px';
             textarea.rows = 3;
             
-            const currentRole = SYLLABUS_APPROVAL_DATA?.actionLabel || 'Faculty';
-            const myDraft = existingComments.find(c => c.reviewerRole === currentRole);
-            if (myDraft) {
-                textarea.value = myDraft.comment;
-            }
+            const postBtn = document.createElement('button');
+            postBtn.type = 'button';
+            postBtn.innerText = 'Post Feedback';
+            postBtn.className = 'ad-section-save-btn';
+            postBtn.style.marginTop = '8px';
+            postBtn.style.padding = '6px 16px';
+            postBtn.style.backgroundColor = '#28a745';
+            postBtn.style.color = '#fff';
+            postBtn.style.border = 'none';
+            postBtn.style.borderRadius = '4px';
+            postBtn.style.cursor = 'pointer';
+            postBtn.style.fontSize = '13px';
+            postBtn.style.fontWeight = 'bold';
 
-            const saveBtn = document.createElement('button');
-            saveBtn.type = 'button';
-            saveBtn.className = 'ad-section-save-btn';
-            saveBtn.innerText = 'Save Comment';
-            saveBtn.style.marginTop = '8px';
-            saveBtn.style.padding = '6px 12px';
-            saveBtn.style.backgroundColor = '#f9f9f9';
-            saveBtn.style.color = '#333';
-            saveBtn.style.border = '1px solid #ccc';
-            saveBtn.style.borderRadius = '4px';
-            saveBtn.style.cursor = 'pointer';
-            saveBtn.style.fontSize = '12px';
-            saveBtn.style.display = 'none';
-
-            textarea.addEventListener('input', () => {
-                saveBtn.style.display = 'inline-block';
-            });
-            textarea.addEventListener('focus', () => {
-                saveBtn.style.display = 'inline-block';
-            });
-
-            saveBtn.addEventListener('click', () => {
+            postBtn.addEventListener('click', () => {
                 const val = textarea.value.trim();
-                const role = SYLLABUS_APPROVAL_DATA?.actionLabel || 'Faculty';
-                const name = document.getElementById('signatory-name-input')?.value || 'Reviewer';
-                
-                window.currentSectionComments = window.currentSectionComments.filter(
-                    c => !(c.sectionKey === sectionKey && c.reviewerRole === role)
-                );
-                
                 if (val) {
+                    const role = getCurrentRole();
+                    const nameInput = document.getElementById('signatory-name-input');
+                    const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : role;
+                    
                     window.currentSectionComments.push({
+                        id: 'cmt_' + Math.random().toString(36).substr(2, 9),
                         sectionKey,
                         reviewerRole: role,
                         reviewerName: name,
@@ -210,75 +295,37 @@
                         createdAt: new Date()
                     });
                     
-                    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px; margin-right:4px;">edit_note</span> Section Feedback<strong style="color:red; margin-left:4px;"> !</strong>`;
-                    btn.style.backgroundColor = '#ffeeba';
-                    btn.style.borderColor = '#ffc107';
-                } else {
-                    if (window.currentSectionComments.filter(c => c.sectionKey === sectionKey).length === 0) {
-                        btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px; margin-right:4px;">edit_note</span> Section Feedback`;
-                        btn.style.backgroundColor = '#f9f9f9';
-                        btn.style.borderColor = '#ccc';
-                    }
-                }
-                saveBtn.style.display = 'none';
-            });
-
-            addView.appendChild(textarea);
-            addView.appendChild(saveBtn);
-            
-            buttonsContainer.appendChild(addBtn);
-            contentContainer.appendChild(addView);
-            
-            addBtn.addEventListener('click', () => {
-                const isShowing = addView.style.display === 'block';
-                Array.from(contentContainer.children).forEach(child => child.style.display = 'none');
-                Array.from(buttonsContainer.children).forEach(b => {
-                    if (b.innerText === 'Add Comment') {
-                        b.style.backgroundColor = '#d4edda';
-                        b.style.color = '#155724';
-                        b.style.border = '1px solid #28a745';
-                    } else {
-                        b.style.backgroundColor = '#f9f9f9';
-                        b.style.fontWeight = 'normal';
-                    }
-                });
-                
-                if (!isShowing) {
-                    addView.style.display = 'block';
-                    addBtn.style.backgroundColor = '#28a745';
-                    addBtn.style.color = '#fff';
-                    addBtn.style.fontWeight = 'bold';
-                    textarea.focus();
+                    textarea.value = '';
+                    renderThread();
+                    updateToggleButton();
                 }
             });
+
+            addContainer.appendChild(textarea);
+            addContainer.appendChild(postBtn);
+            commentContainer.appendChild(addContainer);
         }
 
-        if (buttonsContainer.children.length > 0) {
-            commentContainer.appendChild(buttonsContainer);
-            commentContainer.appendChild(contentContainer);
-        } else {
-            const p = document.createElement('p');
-            p.innerText = 'No feedback yet.';
-            p.style.fontSize = '13px';
-            commentContainer.appendChild(p);
-        }
+        renderThread();
 
         wrapper.parentNode.insertBefore(commentContainer, wrapper.nextSibling);
 
-        btn.addEventListener('click', () => {
-            commentContainer.style.display = commentContainer.style.display === 'none' ? 'block' : 'none';
-            if (!isReadOnly && commentContainer.style.display === 'block') {
-                const ta = commentContainer.querySelector('textarea');
-                if (ta) ta.focus();
+        toggleBtn.addEventListener('click', () => {
+            if (commentContainer.style.display === 'none') {
+                commentContainer.style.display = 'block';
+                if (!isReadOnly) {
+                    const ta = commentContainer.querySelector('textarea');
+                    if (ta) ta.focus();
+                }
+            } else {
+                commentContainer.style.display = 'none';
             }
         });
     });
 
     window.flushSectionComments = function() {
-        document.querySelectorAll('.ad-section-save-btn').forEach(btn => {
-            if (btn.style.display !== 'none') {
-                btn.click();
-            }
-        });
+        // We no longer need to auto-save input on submit since we explicitly "Post Feedback",
+        // but we can optionally save any non-empty textareas here if desired.
+        // For now, doing nothing is safer to avoid accidental posts.
     };
 })();

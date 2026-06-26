@@ -441,6 +441,7 @@ endorseSyllabusRouter.post('/approve/:syllabusId', async (req, res) => {
             approval.status = 'Endorsed to Dean'; 
             approval.approvedBy = 'Program Chair';
             approval.approvalDate = new Date();
+            approval.remarks = ''; // Clear legacy 'Awaiting Faculty Signature'
             
             // Save signature if provided
             if (req.body.signature) approval.PC_Signature = req.body.signature;
@@ -448,6 +449,7 @@ endorseSyllabusRouter.post('/approve/:syllabusId', async (req, res) => {
 
         } else if (status === 'Reject Syllabus' || status === 'Rejected') {
             approval.status = 'Rejected';
+            approval.remarks = '';
             approval.approvedBy = 'Rejected';
         }
 

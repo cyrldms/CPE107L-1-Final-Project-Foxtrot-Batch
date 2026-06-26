@@ -557,21 +557,25 @@
          Hidden data attributes for JS
     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     
+    <script type="application/json" id="section-comments-data">
+        <%- JSON.stringify(locals.sectionComments || []) %>
+    </script>
     <script>
         const SYLLABUS_APPROVAL_DATA = {
-            syllabusId: '<%= locals.syllabusId || syllabusId || "" %>',
-            currentStatus: '<%= locals.currentStatus || currentStatus || "" %>',
-            approvalState: '<%= locals.approvalState || approvalState || "" %>',
-            existingComment: '<%= locals.existingComment || existingComment || "" %>',
-            actionUrlPrefix: '<%= locals.actionUrlPrefix || actionUrlPrefix || "" %>',
-            optionApproveValue: '<%= locals.optionApproveValue || optionApproveValue || "" %>',
-            workflowStep: '<%= locals.workflowStep || workflowStep || "" %>',
-            postUrl: '<%= (locals.actionUrlPrefix || actionUrlPrefix) %>/<%= (locals.syllabusId || syllabusId) %>',
-            backUrl: '<%= locals.workflowStep === "faculty_submission" ? "/faculty" : (locals.actionUrlPrefix || actionUrlPrefix) %>',
-            actionLabel: '<%= (locals.workflowStep || workflowStep) === "approval" ? "Approval" : "Endorsement" %>'
+            syllabusId: '<%= locals.syllabusId || locals.syllabusId || "" %>',
+            currentStatus: '<%= locals.currentStatus || locals.currentStatus || "" %>',
+            approvalState: '<%= locals.approvalState || locals.approvalState || "" %>',
+            existingComment: '<%= locals.existingComment || locals.existingComment || "" %>',
+            actionUrlPrefix: '<%= locals.actionUrlPrefix || locals.actionUrlPrefix || "" %>',
+            optionApproveValue: '<%= locals.optionApproveValue || locals.optionApproveValue || "" %>',
+            workflowStep: '<%= locals.workflowStep || locals.workflowStep || "" %>',
+            postUrl: '<%= (locals.actionUrlPrefix || locals.actionUrlPrefix) %>/<%= (locals.syllabusId || locals.syllabusId) %>',
+            backUrl: '<%= locals.workflowStep === "faculty_submission" ? "/faculty" : (locals.actionUrlPrefix || locals.actionUrlPrefix) %>',
+            actionLabel: '<%= (locals.workflowStep || locals.workflowStep) === "faculty_submission" ? "Faculty" : ((locals.workflowStep || locals.workflowStep) === "approval" ? "Approval" : "Endorsement") %>'
         };
     </script>
     <script src="/Syllabus/js/syllabusApprovalDetail.js?v=3"></script>
+    <script src="/Syllabus/js/sectionComments.js?v=3"></script>
     
 </body>
 
