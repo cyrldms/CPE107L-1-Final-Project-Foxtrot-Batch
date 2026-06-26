@@ -31,15 +31,16 @@ document.addEventListener('DOMContentLoaded', () => {
             statusDot.classList.add('indicator-pending');
         }
 
-        // Conditional Logic for Program Chair Endorsement, Dean Approval, or HR Archiving
-        if (btnSubmit && (workflowStep === 'endorsement' || workflowStep === 'approval' || workflowStep === 'archiving')) {
+        // Conditional Logic for Program Chair Endorsement, Dean Approval, HR Archiving, or Faculty Submission
+        if (btnSubmit && (workflowStep === 'endorsement' || workflowStep === 'approval' || workflowStep === 'archiving' || workflowStep === 'faculty_submission')) {
             const approveVal = typeof SYLLABUS_APPROVAL_DATA !== 'undefined' ? (SYLLABUS_APPROVAL_DATA.optionApproveValue || 'PC_Approved') : 'PC_Approved';
             
             // Reset button styles initially
             btnSubmit.style.backgroundColor = '';
             btnSubmit.style.color = '';
-            btnSubmit.textContent = workflowStep === 'endorsement' ? 'Endorse Syllabus' : 
-                                    (workflowStep === 'archiving' ? 'Archive Syllabus' : 'Submit Approval');
+            btnSubmit.textContent = workflowStep === 'faculty_submission' ? 'Sign and Submit to Program Chair' :
+                                    (workflowStep === 'endorsement' ? 'Endorse Syllabus' : 
+                                    (workflowStep === 'archiving' ? 'Archive Syllabus' : 'Approve Course'));
 
             if (val === approveVal) {
                 // APPROVE SYLLABUS CASE
@@ -86,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sigInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) {
-                 if (workflowStep === 'endorsement' && btnSubmit) {
+                 if ((workflowStep === 'endorsement' || workflowStep === 'faculty_submission' || workflowStep === 'approval') && btnSubmit) {
                      const approveVal = typeof SYLLABUS_APPROVAL_DATA !== 'undefined' ? (SYLLABUS_APPROVAL_DATA.optionApproveValue || 'PC_Approved') : 'PC_Approved';
                      if (statusSelect.value === approveVal) {
                          btnSubmit.disabled = true;
@@ -113,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     previewSection.style.display = 'block';
                 }
 
-                if ((workflowStep === 'endorsement' || workflowStep === 'approval') && btnSubmit) {
+                if ((workflowStep === 'endorsement' || workflowStep === 'faculty_submission' || workflowStep === 'approval') && btnSubmit) {
                     const approveVal = typeof SYLLABUS_APPROVAL_DATA !== 'undefined' ? (SYLLABUS_APPROVAL_DATA.optionApproveValue || 'PC_Approved') : 'PC_Approved';
                     if (statusSelect.value === approveVal) {
                         btnSubmit.disabled = false;
@@ -140,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (previewImgContainer) previewImgContainer.innerHTML = '';
             if (previewSection) previewSection.style.display = 'none';
             
-            if ((workflowStep === 'endorsement' || workflowStep === 'approval') && btnSubmit) {
+            if ((workflowStep === 'endorsement' || workflowStep === 'faculty_submission' || workflowStep === 'approval') && btnSubmit) {
                 const approveVal = typeof SYLLABUS_APPROVAL_DATA !== 'undefined' ? (SYLLABUS_APPROVAL_DATA.optionApproveValue || 'PC_Approved') : 'PC_Approved';
                 if (statusSelect.value === approveVal) {
                     btnSubmit.disabled = true;
@@ -275,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Enable submit button if approving
-            if ((workflowStep === 'endorsement' || workflowStep === 'approval' || workflowStep === 'archiving') && btnSubmit) {
+            if ((workflowStep === 'endorsement' || workflowStep === 'faculty_submission' || workflowStep === 'approval' || workflowStep === 'archiving') && btnSubmit) {
                 const approveVal = typeof SYLLABUS_APPROVAL_DATA !== 'undefined' ? (SYLLABUS_APPROVAL_DATA.optionApproveValue || 'PC_Approved') : 'PC_Approved';
                 if (statusSelect && statusSelect.value === approveVal) {
                     btnSubmit.disabled = false;

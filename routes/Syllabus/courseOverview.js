@@ -34,7 +34,7 @@ function getLatestRemark(a) {
     if (!a) return "";
     if (a.status === 'Archived') return a.HR_Remarks || a.Dean_Remarks || a.PC_Remarks || a.remarks || "";
     if (a.status === 'Approved' || a.status === 'Returned to PC') return a.Dean_Remarks || a.PC_Remarks || a.remarks || "";
-    if (a.status === 'Endorsed' || a.status === 'PC_Approved') return a.PC_Remarks || a.remarks || "";
+    if (a.status === 'Endorsed' || a.status === 'Endorsed to Dean' || a.status === 'PC_Approved') return a.PC_Remarks || a.remarks || "";
     if (a.status === 'Rejected') {
         if (a.approvedBy && a.approvedBy.includes('Dean')) return a.Dean_Remarks || a.PC_Remarks || a.remarks || "";
         return a.PC_Remarks || a.remarks || "";
@@ -95,7 +95,7 @@ coursesOverviewRouter.get('/search', async (req, res) => {
         const courseIds = courses.map(c => c._id.toString());
         const approvals = await SyllabusApprovalStatus.find({ syllabusID: { $in: courseIds } });
 
-        const formatted = courses.map(c => {
+        let formatted = courses.map(c => {
             const idStr = c._id.toString();
             const draftRecord = approvals.find(a => a.syllabusID.toString() === idStr);
 
@@ -114,6 +114,15 @@ coursesOverviewRouter.get('/search', async (req, res) => {
                 remarks: draftRecord ? getLatestRemark(draftRecord) : ""
             };
         });
+
+        if (userRole === 'dean') {
+            formatted = formatted.filter(c => 
+                c.status === 'Endorsed' || 
+                c.status === 'Endorsed to Dean' || 
+                c.status === 'Approved' || 
+                c.status === 'Archived'
+            );
+        }
 
         res.json(formatted);
     } catch (error) {
@@ -154,7 +163,7 @@ coursesOverviewRouter.get('/:userId', async (req, res) => {
         const courseIds = userCourses.map(c => c._id.toString());
         const approvals = await SyllabusApprovalStatus.find({ syllabusID: { $in: courseIds } });
 
-        const formattedCourses = userCourses.map(c => {
+        let formattedCourses = userCourses.map(c => {
             const idStr = c._id.toString();
             const draftRecord = approvals.find(a => a.syllabusID.toString() === idStr);
 
@@ -173,6 +182,15 @@ coursesOverviewRouter.get('/:userId', async (req, res) => {
                 remarks: draftRecord ? getLatestRemark(draftRecord) : ""
             };
         });
+
+        if (userRole === 'dean') {
+            formattedCourses = formattedCourses.filter(c => 
+                c.status === 'Endorsed' || 
+                c.status === 'Endorsed to Dean' || 
+                c.status === 'Approved' || 
+                c.status === 'Archived'
+            );
+        }
 
         res.render('Syllabus/courseOverview', {
             courses: formattedCourses,

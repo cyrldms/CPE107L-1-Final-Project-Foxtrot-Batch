@@ -299,7 +299,7 @@ adminOverviewRouter.get('/search', async (req, res) => {
         const courseIds = courses.map(c => c._id.toString());
         const approvals = await SyllabusApprovalStatus.find({
             syllabusID: { $in: courseIds },
-            status: { $in: ['Approved', 'Archived', 'Endorsed'] }
+            status: { $in: ['Approved', 'Archived', 'Endorsed', 'Endorsed to Dean'] }
         });
 
         const formatted = courses

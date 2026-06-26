@@ -33,9 +33,8 @@ coursesOverviewFacultyRouter.get('/', async (req, res) => {
     try {
         const searchQuery = req.query.search ? req.query.search.toLowerCase() : '';
 
-        // Filter courses to only show those assigned to the logged-in faculty
-        const loggedInUserId = req.session && req.session.user ? (req.session.user.id || req.session.user._id) : null;
-        const filter = loggedInUserId ? { assignedInstructor: loggedInUserId } : {};
+        // The Faculty should see every course created by the Program Chair
+        const filter = { courseCode: { $ne: '__GLOBAL_TEMPLATE__' } };
         let userCourses = await Syllabus.find(filter);
 
         if (mainDB.models.User) {
@@ -189,7 +188,12 @@ coursesOverviewFacultyRouter.get('/submit/:syllabusId', async (req, res) => {
                 workflowStep: 'faculty_submission',
                 actionLabel: 'Submission',
                 user: req.session.user,
-                pcSignatoryName: approval ? approval.Faculty_SignatoryName || '' : ''
+                facultySignature: approval ? approval.Faculty_Signature : null,
+                facultySignatoryName: approval ? approval.Faculty_SignatoryName : '',
+                pcSignature: approval ? approval.PC_Signature : null,
+                pcSignatoryName: approval ? approval.PC_SignatoryName : '',
+                deanSignature: approval ? approval.Dean_Signature : null,
+                deanSignatoryName: approval ? approval.Dean_SignatoryName : ''
             });
         }
     } catch (err) {
@@ -214,7 +218,7 @@ coursesOverviewFacultyRouter.post('/submit/:syllabusId', async (req, res) => {
         if (!approval) {
             approval = new SyllabusApprovalStatus({
                 syllabusID: syllabusId,
-                status: 'Pending',
+                status: 'Signed by Faculty',
                 approvedBy: [],
                 remarks: ''
             });
@@ -222,7 +226,7 @@ coursesOverviewFacultyRouter.post('/submit/:syllabusId', async (req, res) => {
 
         approval.Faculty_Signature = signature;
         approval.Faculty_SignatoryName = signatoryName;
-        approval.status = 'Pending';
+        approval.status = 'Signed by Faculty';
         
         await approval.save();
         res.redirect('/faculty');

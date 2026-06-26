@@ -69,6 +69,12 @@ previewRoutes.get('/:syllabusId', async (req, res) => {
             schedules: schedules,
             evaluation: evaluation,
             status: approval ? approval.status : 'Not Submitted',
+            facultySignature: approval ? approval.Faculty_Signature : null,
+            facultySignatoryName: approval ? approval.Faculty_SignatoryName : '',
+            pcSignature: approval ? approval.PC_Signature : null,
+            pcSignatoryName: approval ? approval.PC_SignatoryName : '',
+            deanSignature: approval ? approval.Dean_Signature : null,
+            deanSignatoryName: approval ? approval.Dean_SignatoryName : '',
             user: req.session.user
         });
     } catch (err) {

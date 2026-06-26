@@ -98,7 +98,7 @@ syllabusApprovalRouter.get('/', async (req, res) => {
                 if (userRole === 'dean') {
                     // Dean's view:
                     // 1. Items waiting for Dean (status=Endorsed, or Approved by PC in any form)
-                    const isEndorsed = status === 'Endorsed' 
+                    const isEndorsed = status === 'Endorsed' || status === 'Endorsed to Dean'
                         || (status === 'Approved' && approvedBy === 'Program Chair')
                         || (status === 'Approved' && approvedBy === 'PC_Approved');
                     // 2. Items finally approved by Dean
@@ -144,7 +144,7 @@ syllabusApprovalRouter.get('/', async (req, res) => {
         let pendingCount, approvedCount;
 
         if (userRole === 'dean') {
-            pendingCount = drafts.filter(d => d.status === 'Endorsed').length;
+            pendingCount = drafts.filter(d => d.status === 'Endorsed' || d.status === 'Endorsed to Dean').length;
             approvedCount = drafts.filter(d => d.status === 'Approved').length;
         } else {
             pendingCount = drafts.filter(d => d.status === 'Pending').length;

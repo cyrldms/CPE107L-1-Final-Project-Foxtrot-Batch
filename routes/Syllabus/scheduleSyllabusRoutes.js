@@ -208,18 +208,8 @@ scheduleSyllabusRoutes.post('/submit', async (req, res) => {
         const approvalData = { syllabusID };
 
         if (userRole === 'Program-Chair' || userRole === 'program-chair') {
-            // PC submits → auto-endorse, skip PC queue, go directly to Dean
-            initialStatus = 'Endorsed';
-            initialRemarks = 'Auto-endorsed (submitted by Program Chair)';
-            approvalData.approvedBy = 'Program Chair';
-            approvalData.approvalDate = new Date();
-            approvalData.PC_Remarks = 'Auto-endorsed by Program Chair';
-            approvalData.PC_SignatoryName = reqSignatoryName || userName;
-            approvalData.PC_Signature = reqSignatureData;
-            
-            // Apply signature to Faculty "Prepared By" as well
-            approvalData.Faculty_SignatoryName = reqSignatoryName || userName;
-            approvalData.Faculty_Signature = reqSignatureData;
+            initialStatus = 'Pending Faculty Signature';
+            initialRemarks = 'Awaiting Faculty Signature';
 
         } else if (userRole === 'Dean' || userRole === 'dean') {
             // Dean submits → auto-endorse + auto-approve, skip to HR

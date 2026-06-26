@@ -82,7 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function getStatusInfo(status) {
         switch(status) {
             case 'Pending': return { cssClass: 'status-pending', label: 'Pending' };
-            case 'Endorsed': return { cssClass: 'status-endorsed', label: 'Endorsed' };
+            case 'Endorsed': 
+            case 'Endorsed to Dean': return { cssClass: 'status-endorsed', label: 'Endorsed to Dean' };
             case 'Approved': return { cssClass: 'status-approved', label: 'Approved by Dean' };
             case 'Archived': return { cssClass: 'status-archived', label: 'Verified by HR' };
             case 'Rejected': case 'Returned': return { cssClass: 'status-rejected', label: status };
@@ -98,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function buildRemarksHtml(status, pcRemarks, deanRemarks, hrRemarks) {
         const strStatus = status || 'No Syllabus Draft';
-        const isEndorsedOrHigher = ['Endorsed', 'Approved', 'Archived', 'Rejected'].includes(strStatus);
+        const isEndorsedOrHigher = ['Endorsed', 'Endorsed to Dean', 'Approved', 'Archived', 'Rejected'].includes(strStatus);
         const isApprovedOrHigher = ['Approved', 'Archived', 'Returned to PC', 'Returned to Dean'].includes(strStatus);
         const isArchived = strStatus === 'Archived';
 
@@ -176,7 +177,7 @@ window.openDraftModal = async function (syllabusId, hasDraft, status, courseTitl
     const downloadBtn = document.getElementById('draftDownloadBtn');
     const modalTitle = document.getElementById('draftModalTitle');
 
-    const RestrictedStatuses = ['Approved', 'Pending', 'Archived', 'Endorsed'];
+    const RestrictedStatuses = ['Approved', 'Pending', 'Archived', 'Endorsed', 'Endorsed to Dean'];
     const isRestricted = RestrictedStatuses.includes(status);
     const isVerified = status === 'Archived';
 
@@ -229,18 +230,22 @@ window.openDraftModal = async function (syllabusId, hasDraft, status, courseTitl
             msg.innerText = `This syllabus is currently ${status}. Editing is disabled.`;
             btn.innerText = 'View Syllabus Draft';
             btn.onclick = () => window.location.href = `/syllabus/preview/${syllabusId}`;
+        } else if (status === 'Signed by Faculty' || status === 'Endorsed' || status === 'Approved' || status === 'PC_Approved' || status === 'Archived') {
+            msg.innerText = 'You have already signed and submitted this syllabus.';
+            btn.innerText = 'View Syllabus Draft';
+            btn.onclick = () => window.location.href = `/syllabus/preview/${syllabusId}`;
+        } else if (status === 'Pending Faculty Signature') {
+            msg.innerText = 'Please review, sign, and submit this syllabus draft.';
+            btn.innerText = 'Sign & Submit to Program Chair';
+            btn.onclick = () => window.location.href = `/faculty/submit/${syllabusId}`;
         } else {
             msg.innerText = 'A syllabus draft already exists for this course.';
-            btn.innerText = 'Edit Syllabus Draft';
-            btn.onclick = () => window.location.href = `/syllabus/create/${syllabusId}`;
+            btn.innerText = 'View Syllabus Draft';
+            btn.onclick = () => window.location.href = `/syllabus/preview/${syllabusId}`;
         }
     } else {
-        msg.innerText = "There's no syllabus draft at the moment.";
-        btn.innerText = '+ Add Syllabus Draft';
-        btn.onclick = () => {
-            window.closeDraftModal();
-            window.location.href = `/syllabus/create/${syllabusId}`;
-        };
+        msg.innerText = "There's no syllabus draft at the moment. Please wait for the Program Chair to provide one.";
+        btn.style.display = 'none'; // Hide action button since they can't create drafts
     }
 
     if (modal) modal.style.display = 'flex';

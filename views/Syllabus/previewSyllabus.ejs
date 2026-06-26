@@ -523,6 +523,55 @@
                             <div class="course-editable-text multiline"><%= locals.syl && syl.references ? syl.references : 'None specified.' %></div>
                         </div>
                     </section>
+                    
+                    <!-- Signature Block for PDF Export -->
+                    <section class="content-panel-transparent" style="margin-top:2rem; padding-top:1.5rem; border-top:2px solid #e0e0e0; page-break-inside: avoid;">
+                        <div style="display:flex; justify-content:space-evenly; gap:2rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+                            
+                            <!-- Faculty Signature -->
+                            <div style="text-align:center; flex:1; min-width:200px;">
+                                <p style="font-weight:600; font-size:0.85rem; color:#666; margin-bottom:8px;">Prepared by:</p>
+                                <div style="margin-bottom:6px; height:60px; max-width:150px; margin:0 auto;">
+                                    <% if (locals.facultySignature) { %>
+                                        <img src="<%= locals.facultySignature %>" alt="Faculty Signature" style="max-height:100%; max-width:100%; object-fit:contain;">
+                                    <% } else { %>
+                                        <div style="height:60px; border-bottom:1px solid #999; width:150px; margin:0 auto 6px;"></div>
+                                    <% } %>
+                                </div>
+                                <p style="font-weight:700; font-size:0.9rem; margin:4px 0 2px;"><%= locals.facultySignatoryName || 'FACULTY' %></p>
+                                <p style="font-size:0.8rem; color:#888;">Course Coordinator</p>
+                            </div>
+                            
+                            <!-- Program Chair Signature -->
+                            <div style="text-align:center; flex:1; min-width:200px;">
+                                <p style="font-weight:600; font-size:0.85rem; color:#666; margin-bottom:8px;">Endorsed by:</p>
+                                <div style="margin-bottom:6px; height:60px; max-width:150px; margin:0 auto;">
+                                    <% if (locals.pcSignature) { %>
+                                        <img src="<%= locals.pcSignature %>" alt="PC Signature" style="max-height:100%; max-width:100%; object-fit:contain;">
+                                    <% } else { %>
+                                        <div style="height:60px; border-bottom:1px solid #999; width:150px; margin:0 auto 6px;"></div>
+                                    <% } %>
+                                </div>
+                                <p style="font-weight:700; font-size:0.9rem; margin:4px 0 2px;"><%= locals.pcSignatoryName || 'PROGRAM CHAIR' %></p>
+                                <p style="font-size:0.8rem; color:#888;">Program Chair, CPE</p>
+                            </div>
+                            
+                            <!-- Dean Signature -->
+                            <div style="text-align:center; flex:1; min-width:200px;">
+                                <p style="font-weight:600; font-size:0.85rem; color:#666; margin-bottom:8px;">Approved by:</p>
+                                <div style="margin-bottom:6px; height:60px; max-width:150px; margin:0 auto;">
+                                    <% if (locals.deanSignature) { %>
+                                        <img src="<%= locals.deanSignature %>" alt="Dean Signature" style="max-height:100%; max-width:100%; object-fit:contain;">
+                                    <% } else { %>
+                                        <div style="height:60px; border-bottom:1px solid #999; width:150px; margin:0 auto 6px;"></div>
+                                    <% } %>
+                                </div>
+                                <p style="font-weight:700; font-size:0.9rem; margin:4px 0 2px;"><%= locals.deanSignatoryName || 'DEAN' %></p>
+                                <p style="font-size:0.8rem; color:#888;">Dean, CEA</p>
+                            </div>
+
+                        </div>
+                    </section>
                 </div>
             </div>
 

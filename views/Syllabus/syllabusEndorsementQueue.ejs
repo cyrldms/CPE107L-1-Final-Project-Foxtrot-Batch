@@ -80,7 +80,7 @@
 
                                     <% for (var i=0; i < drafts.length; i++) { %>
                                         <% var d=drafts[i]; %>
-                                            <% if (d.status==='Pending' || d.status==='Endorsed' || d.status==='PC_Approved' || d.status==='Rejected') { %>
+                                            <% if (d.status==='Pending' || d.status==='Endorsed' || d.status==='PC_Approved' || d.status==='Rejected' || d.status==='Pending Faculty Signature' || d.status==='Signed by Faculty') { %>
                                                 <div class="draft-row" data-status="<%= d.status %>"
                                                     data-title="<%= (d.courseTitle || '').toLowerCase() %>"
                                                     data-code="<%= (d.courseCode || '').toLowerCase() %>">
@@ -124,14 +124,21 @@
                                                             <span class="status-badge status-approved">
                                                                 <i class="fas fa-stamp"></i> <%= locals.approvedLabel || d.status %>
                                                             </span>
-                                                        <% } else if (d.status === 'Pending') { %>
-                                                            <span class="status-badge status-pending">
-                                                                <i class="fas fa-hourglass-half"></i> Pending
+                                                        <% } else if (d.status === 'Pending' || d.status === 'Signed by Faculty') { %>
+                                                            <span class="status-badge status-pending" style="background: rgba(52, 168, 83, 0.1); color: #34a853;">
+                                                                <i class="fas fa-check-circle"></i> <%= d.status %>
                                                             </span>
                                                             <button class="review-btn"
                                                                 data-href="<%= locals.actionUrlPrefix %>/<%= d.syllabusId %>"
                                                                 onclick="window.location.href=this.dataset.href">
                                                                 <i class="fas fa-file-signature"></i> <%= locals.actionLabel %>
+                                                            </button>
+                                                        <% } else if (d.status === 'Pending Faculty Signature') { %>
+                                                            <span class="status-badge status-pending">
+                                                                <i class="fas fa-hourglass-half"></i> <%= d.status %>
+                                                            </span>
+                                                            <button class="review-btn" disabled style="opacity: 0.5; cursor: not-allowed;" title="Waiting for Faculty Signature">
+                                                                <i class="fas fa-lock"></i> <%= locals.actionLabel %>
                                                             </button>
                                                         <% } else if (d.status === 'Rejected') { %>
                                                             <span class="status-badge" style="background: rgba(217, 48, 37, 0.1); color: #d93025; font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">

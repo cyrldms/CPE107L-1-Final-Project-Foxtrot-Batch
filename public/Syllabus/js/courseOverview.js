@@ -458,9 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getStatusInfo(status) {
-        switch(status) {
+        switch (status) {
             case 'Pending': return { cssClass: 'status-pending', label: 'Pending' };
-            case 'Endorsed': return { cssClass: 'status-endorsed', label: 'Endorsed' };
+            case 'Endorsed': 
+            case 'Endorsed to Dean': return { cssClass: 'status-endorsed', label: 'Endorsed to Dean' };
             case 'Approved': return { cssClass: 'status-approved', label: 'Approved by Dean' };
             case 'Archived': return { cssClass: 'status-archived', label: 'Verified by HR' };
             case 'Rejected': case 'Returned': return { cssClass: 'status-rejected', label: status };
@@ -524,7 +525,7 @@ window.openDraftModal = function (syllabusId, hasDraft, status) {
     const btn = document.getElementById('draftActionBtn');
     const modalTitle = document.getElementById('draftModalTitle');
 
-    const RestrictedStatuses = ['Approved', 'Pending', 'Archived', 'Endorsed'];
+    const RestrictedStatuses = ['Approved', 'Pending', 'Archived', 'Endorsed', 'Endorsed to Dean'];
     const isRestricted = RestrictedStatuses.includes(status);
     const isVerified = status === 'Archived';
 
@@ -538,6 +539,10 @@ window.openDraftModal = function (syllabusId, hasDraft, status) {
             msg.innerText = 'This syllabus has been verified by HR.';
             btn.innerText = 'View Syllabus';
             btn.onclick = () => window.location.href = `/syllabus/preview/${syllabusId}`;
+        } else if (window.USER_ROLE === 'dean' && (status === 'Endorsed' || status === 'Endorsed to Dean')) {
+            msg.innerText = `This syllabus has been endorsed to the Dean.`;
+            btn.innerText = 'Approve Course';
+            btn.onclick = () => window.location.href = `/syllabus/dean/approve/${syllabusId}`;
         } else if (isRestricted) {
             msg.innerText = `This syllabus is currently ${status}. Editing is disabled.`;
             btn.innerText = 'View Syllabus Draft';

@@ -22,12 +22,7 @@ deanApprovalRouter.get('/:syllabusId', async (req, res) => {
     try {
         const syl = await Syllabus.findById(syllabusId).populate('assignedInstructor');
         const approval = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId }).lean();
-        fs.writeFileSync('debug_approval.json', JSON.stringify({
-            syllabusId,
-            approvalFound: !!approval,
-            approvalId: approval ? approval._id : null,
-            sectionComments: approval ? approval.sectionComments : null
-        }, null, 2));
+
         if (syl) {
             const peos = await ProgramEducationObjectives.find({ syllabusID: syllabusId });
             const seos = await StudentEducationObjectives.find({ syllabusID: syllabusId });
@@ -56,10 +51,12 @@ deanApprovalRouter.get('/:syllabusId', async (req, res) => {
                 schedules,
                 evaluations,
                 syl,
-                pcSignature: approval ? (approval.PC_Signature || null) : null,
-                pcSignatoryName: approval ? (approval.PC_SignatoryName || '') : '',
                 facultySignature: approval ? (approval.Faculty_Signature || null) : null,
                 facultySignatoryName: approval ? (approval.Faculty_SignatoryName || '') : '',
+                pcSignature: approval ? (approval.PC_Signature || null) : null,
+                pcSignatoryName: approval ? (approval.PC_SignatoryName || '') : '',
+                deanSignature: approval ? (approval.Dean_Signature || null) : null,
+                deanSignatoryName: approval ? (approval.Dean_SignatoryName || '') : '',
                 sectionComments: approval ? (approval.sectionComments || []) : [],
                 user: req.session.user
             });

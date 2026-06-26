@@ -112,8 +112,9 @@
                                                     var rawStatus = course.status || 'No Syllabus Draft';
                                                     var statusClass = 'status-no-draft';
                                                     var statusLabel = rawStatus;
-                                                    if (rawStatus === 'Pending') { statusClass = 'status-pending'; statusLabel = 'Pending'; }
-                                                    else if (rawStatus === 'Endorsed') { statusClass = 'status-endorsed'; statusLabel = 'Endorsed'; }
+                                                    if (rawStatus === 'Pending' || rawStatus === 'Pending Faculty Signature') { statusClass = 'status-pending'; statusLabel = rawStatus; }
+                                                    else if (rawStatus === 'Signed by Faculty') { statusClass = 'status-pending'; statusLabel = 'Signed by Faculty'; }
+                                                    else if (rawStatus === 'Endorsed' || rawStatus === 'Endorsed to Dean') { statusClass = 'status-endorsed'; statusLabel = rawStatus; }
                                                     else if (rawStatus === 'Approved') { statusClass = 'status-approved'; statusLabel = 'Approved by Dean'; }
                                                     else if (rawStatus === 'Archived') { statusClass = 'status-archived'; statusLabel = 'Verified by HR'; }
                                                     else if (rawStatus === 'Rejected' || rawStatus === 'Returned') { statusClass = 'status-rejected'; statusLabel = rawStatus; }
@@ -236,7 +237,9 @@
             </div>
         </div>
     </div>
-
+    <script>
+        window.USER_ROLE = "<%= locals.user && locals.user.role ? locals.user.role.toLowerCase() : '' %>";
+    </script>
     <script src="/Syllabus/js/courseOverview.js"></script>
 </body>
 

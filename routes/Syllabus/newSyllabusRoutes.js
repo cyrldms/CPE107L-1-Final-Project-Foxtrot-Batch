@@ -19,11 +19,16 @@ const upload = multer({
  */
 newSyllabusRoutes.get('/:syllabusId', async (req, res) => {
     try {
+        const userRole = (req.session.user && req.session.user.role) ? req.session.user.role.toLowerCase() : '';
+        if (userRole === 'faculty') {
+            return res.status(403).send('Forbidden: Faculty cannot edit the course syllabus draft. You are only allowed to view and sign.');
+        }
+
         const syllabusId = req.params.syllabusId;
         console.log(`DEBUG: Reached newSyllabusRoutes GET /:syllabusId with ID: ${syllabusId}`);
-        
+
         let peos = await ProgramEducationalObjectives.findOne({ syllabusID: syllabusId });
-        let sos  = await StudentEducationalObjectives.findOne({ syllabusID: syllabusId });
+        let sos = await StudentEducationalObjectives.findOne({ syllabusID: syllabusId });
 
         // Fall back to admin global template only when BOTH are absent for this syllabus.
         // Never partially merge template + existing data.
@@ -31,7 +36,7 @@ newSyllabusRoutes.get('/:syllabusId', async (req, res) => {
             const template = await Syllabus.findOne({ courseCode: '__GLOBAL_TEMPLATE__' });
             if (template) {
                 peos = await ProgramEducationalObjectives.findOne({ syllabusID: template._id });
-                sos  = await StudentEducationalObjectives.findOne({ syllabusID: template._id });
+                sos = await StudentEducationalObjectives.findOne({ syllabusID: template._id });
             }
         }
 
@@ -62,14 +67,17 @@ newSyllabusRoutes.get('/:syllabusId', async (req, res) => {
     }
 });
 
-
 /**
  * POST: Save the new syllabus to MongoDB
  */
 newSyllabusRoutes.post('/add', upload.single('courseImage'), async (req, res) => {
     try {
-        const { courseCode, courseTitle, userId } = req.body;
+        const userRole = (req.session.user && req.session.user.role) ? req.session.user.role.toLowerCase() : '';
+        if (userRole === 'faculty') {
+            return res.status(403).send('Forbidden: Faculty cannot edit the course syllabus draft.');
+        }
 
+        const { courseCode, courseTitle, userId } = req.body;
         const syllabusData = {
             userID: userId,
             courseCode,
@@ -84,8 +92,6 @@ newSyllabusRoutes.post('/add', upload.single('courseImage'), async (req, res) =>
 
         const newSyllabus = new Syllabus(syllabusData);
         await newSyllabus.save();
-
-        // Redirect back to the dashboard after saving
         res.redirect(`/syllabus/${userId}`);
     } catch (error) {
         console.error("Error saving syllabus:", error);

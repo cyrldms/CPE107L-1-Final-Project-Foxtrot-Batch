@@ -378,7 +378,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function getStatusInfo(status) {
         switch(status) {
             case 'Pending': return { cssClass: 'status-pending', label: 'Pending' };
-            case 'Endorsed': return { cssClass: 'status-endorsed', label: 'Endorsed' };
+            case 'Endorsed': 
+            case 'Endorsed to Dean': return { cssClass: 'status-endorsed', label: 'Endorsed to Dean' };
             case 'Approved': return { cssClass: 'status-approved', label: 'Approved by Dean' };
             case 'Archived': return { cssClass: 'status-archived', label: 'Verified by HR' };
             case 'Rejected': case 'Returned': return { cssClass: 'status-rejected', label: status };
@@ -433,7 +434,7 @@ window.openDraftModal = function (syllabusId, hasDraft, status) {
     const btn = document.getElementById('draftActionBtn');
     const modalTitle = document.getElementById('draftModalTitle');
 
-    const RestrictedStatuses = ['Approved', 'Pending', 'Archived', 'Endorsed'];
+    const RestrictedStatuses = ['Approved', 'Pending', 'Archived', 'Endorsed', 'Endorsed to Dean'];
     const isRestricted = RestrictedStatuses.includes(status);
     const isVerified = status === 'Archived';
 
