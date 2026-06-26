@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syllabus Tracking | System</title>
+    
+    <link rel="icon" type="image/x-icon" href="/common/img/chalkboardLogo.ico">
+    <link rel="stylesheet" href="/common/css/variables.css">
+    <link rel="stylesheet" href="/Syllabus/css/syllabus.css">
+    <link rel="stylesheet" href="/Syllabus/css/courseOverview.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    
+    <style>
+        .tracking-dashboard {
+            /* Inherit structural layout from .overview-panel */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tracking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .tracking-header h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #fff;
+            border-radius: 6px;
+            padding: 12px 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid #ccc;
+        }
+
+        .metric-card.total { border-color: #007bff; }
+        .metric-card.completed { border-color: #28a745; }
+        .metric-card.in-progress { border-color: #ffc107; }
+        .metric-card.no-draft { border-color: #dc3545; }
+        .metric-card.percent { border-color: #6f42c1; }
+
+        .metric-title {
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+
+        .metric-icon {
+            font-size: 1.6rem;
+            color: #dee2e6;
+            margin-left: auto;
+            margin-top: -24px;
+        }
+
+        /* Progress Bar */
+        .progress-wrapper {
+            background: #e9ecef;
+            border-radius: 6px;
+            height: 8px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            background: #6f42c1;
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        /* Data Table */
+        .table-container {
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.85rem;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:hover {
+            background-color: #f1f3f5;
+        }
+
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-inprogress { background: #fff3cd; color: #856404; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-nodraft { background: #e2e3e5; color: #383d41; }
+        .status-endorsed { background: #cce5ff; color: #004085; }
+
+        .date-text {
+            color: #6c757d;
+            font-size: 0.75rem;
+        }
+
+        .view-btn {
+            background: #f8f9fa;
+            border: 1px solid #ced4da;
+            color: #495057;
+            padding: 3px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+        .view-btn:hover { background: #e9ecef; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <% if (locals.user && (locals.user.role === 'Dean' || locals.user.role === 'dean')) { %>
+            <%- include('../MainPages/dean/partials/deanMenuBar') %>
+        <% } else { %>
+            <%- include('../partials/sideMenuBar', { currentPageCategory: locals.currentPageCategory || 'syllabus-tracking' }) %>
+        <% } %>
+
+        <!-- Main Content -->
+        <main class="main-content" style="background: #ffffff !important;">
+            <section class="content-panel">
+                <div class="overview-panel tracking-dashboard">
+
+                    <div class="tracking-header">
+                    <h1>
+                        <a href="<%= locals.backUrl || '/syllabus' %>" style="color: #6c757d; text-decoration: none; display: flex; align-items: center; margin-right: 10px;" title="Back to Syllabus">
+                            <span class="material-symbols-outlined" style="font-size:24px;">arrow_back</span>
+                        </a>
+                        <span class="material-symbols-outlined" style="font-size:32px;">query_stats</span> Syllabus Tracking Overview
+                    </h1>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card total">
+                        <span class="metric-title">Total Courses</span>
+                        <div class="metric-value"><%= locals.metrics.total %></div>
+                        <span class="material-symbols-outlined metric-icon">menu_book</span>
+                    </div>
+                    
+                    <div class="metric-card completed">
+                        <span class="metric-title">Completed (Approved)</span>
+                        <div class="metric-value"><%= locals.metrics.completed %></div>
+                        <span class="material-symbols-outlined metric-icon">check_circle</span>
+                    </div>
+
+                    <div class="metric-card in-progress">
+                        <span class="metric-title">In Progress</span>
+                        <div class="metric-value"><%= locals.metrics.inProgress %></div>
+                        <span class="material-symbols-outlined metric-icon">pending_actions</span>
+                    </div>
+
+                    <div class="metric-card no-draft">
+                        <span class="metric-title">No Draft Yet</span>
+                        <div class="metric-value"><%= locals.metrics.noDraft %></div>
+                        <span class="material-symbols-outlined metric-icon">note_add</span>
+                    </div>
+
+                    <div class="metric-card percent">
+                        <span class="metric-title">Overall Completion</span>
+                        <div class="metric-value"><%= locals.metrics.completionPercentage %>%</div>
+                        <div class="progress-wrapper">
+                            <div class="progress-fill" style="width: <%= locals.metrics.completionPercentage %>%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-title">
+                        <span class="material-symbols-outlined">list_alt</span> All Syllabi Status
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Course Code</th>
+                                <th>Course Title</th>
+                                <th>Instructor</th>
+                                <th>Term / SY</th>
+                                <th>Status</th>
+                                <th>Last Updated</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (locals.trackingList && locals.trackingList.length > 0) { %>
+                                <% locals.trackingList.forEach(item => { 
+                                    let badgeClass = 'status-nodraft';
+                                    if (item.status === 'Approved' || item.status === 'Archived') badgeClass = 'status-approved';
+                                    else if (item.status.includes('Endorsed')) badgeClass = 'status-endorsed';
+                                    else if (item.status.includes('Reject') || item.status.includes('Return')) badgeClass = 'status-rejected';
+                                    else if (item.status !== 'No Syllabus Draft' && item.status !== 'Not Submitted') badgeClass = 'status-inprogress';
+                                %>
+                                <tr>
+                                    <td style="font-weight:600;"><%= item.courseCode %></td>
+                                    <td><%= item.courseTitle %></td>
+                                    <td><%= item.instructor %></td>
+                                    <td><%= item.term %> / <%= item.schoolYear %></td>
+                                    <td><span class="status-badge <%= badgeClass %>"><%= item.status %></span></td>
+                                    <td class="date-text">
+                                        <%= new Date(item.lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                    </td>
+                                    <td>
+                                        <a href="/syllabus/preview/<%= item.syllabusId %>" class="view-btn">View</a>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" style="text-align:center; padding: 20px; color: #6c757d;">No courses found in the database.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

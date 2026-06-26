@@ -102,6 +102,7 @@ import deanApprovalRouter from "./routes/Syllabus/deanApprovalRoutes.js";
 import adminOverviewRouter from "./routes/Syllabus/adminOverviewRoute.js";
 import scheduleSyllabusRoutes from "./routes/Syllabus/scheduleSyllabusRoutes.js";
 import previewRoutes from "./routes/Syllabus/previewRoutes.js";
+import syllabusTrackingRoutes from "./routes/Syllabus/syllabusTrackingRoutes.js";
 
 // ATA
 import ataPages from "./routes/ATA/ataPages.js";
@@ -193,6 +194,7 @@ app.use("/syllabus/prog-chair", endorseSyllabusRouter);
 app.use("/syllabus/dean/approve", deanApprovalRouter);
 app.use("/syllabus/preview", previewRoutes);
 app.use("/syllabus/hr", adminOverviewRouter);
+app.use("/syllabus/tracking", syllabusTrackingRoutes);
 app.use("/syllabus", courseOverviewRoutes); // wildcard /:userId — MUST be last
 
 // Faculty specific route
