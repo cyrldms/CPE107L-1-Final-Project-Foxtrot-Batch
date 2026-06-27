@@ -62,7 +62,7 @@ syllabusTrackingRoutes.get('/', async (req, res) => {
                 completionPercentage
             },
             trackingList,
-            currentPageCategory: 'syllabus-tracking',
+            currentPageCategory: 'syllabus',
             user: req.session ? req.session.user : null,
             backUrl
         });
