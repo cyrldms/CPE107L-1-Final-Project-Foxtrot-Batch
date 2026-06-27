@@ -78,6 +78,10 @@
                                     style="background-color: var(--accent-primary); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px; height: 38px; margin-left: 10px;">
                                     <i class="fas fa-chart-line"></i> Syllabus Tracking
                                 </button>
+                                <button onclick="openReviewFormModal()" 
+                                    style="background-color: var(--accent-secondary); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px; height: 38px; margin-left: 10px;">
+                                    <i class="fas fa-file-contract"></i> Syllabus Review Form
+                                </button>
 
                                 <div id="deleteToolbar" class="delete-toolbar" style="display: none;">
                                     <button id="cancelDeleteBtn" class="cancel-delete-btn">Cancel</button>
@@ -241,6 +245,65 @@
             </div>
         </div>
     </div>
+    </div>
+
+    <!-- Syllabus Review Form Modal -->
+    <div class="modal-overlay" id="reviewFormModal">
+        <div class="modal-content" style="width: 600px; text-align: left;">
+            <div class="modal-header" style="justify-content: space-between;">
+                <div class="modal-title-group">
+                    <div class="modal-icon" style="background: var(--accent-secondary);"><i class="fas fa-file-contract"></i></div>
+                    <h2>Syllabus Review Form</h2>
+                </div>
+                <span class="close-modal" onclick="closeReviewFormModal()">&times;</span>
+            </div>
+            <div style="padding: 20px; font-size: 14px; color: #333; text-align: left; max-height: 400px; overflow-y: auto; background: #f9f9f9; border: 1px solid #ddd; margin: 10px; border-radius: 4px;">
+                <h3 style="text-align: center; border-bottom: 2px solid var(--accent-primary); padding-bottom: 10px; margin-bottom: 15px;">Syllabus Review Form (Template)</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div><strong>Course Title:</strong> _________________</div>
+                    <div><strong>Course Code:</strong> _________________</div>
+                    <div><strong>Instructor:</strong> _________________</div>
+                    <div><strong>Date Reviewed:</strong> _________________</div>
+                </div>
+                
+                <h4 style="margin-bottom: 10px; color: var(--accent-secondary);">I. Content & Alignment</h4>
+                <ul style="list-style: none; padding-left: 0; margin-bottom: 15px;">
+                    <li style="margin-bottom: 5px;"><input type="checkbox" disabled style="margin-right: 8px;"> Course Description matches the approved curriculum</li>
+                    <li style="margin-bottom: 5px;"><input type="checkbox" disabled style="margin-right: 8px;"> Course Outcomes are clearly stated and measurable</li>
+                    <li style="margin-bottom: 5px;"><input type="checkbox" disabled style="margin-right: 8px;"> Assessment tasks align with the Course Outcomes</li>
+                    <li style="margin-bottom: 5px;"><input type="checkbox" disabled style="margin-right: 8px;"> Grading system is clearly defined and accurate</li>
+                </ul>
+
+                <h4 style="margin-bottom: 10px; color: var(--accent-secondary);">II. Schedule & Resources</h4>
+                <ul style="list-style: none; padding-left: 0; margin-bottom: 15px;">
+                    <li style="margin-bottom: 5px;"><input type="checkbox" disabled style="margin-right: 8px;"> Weekly schedule covers all required topics</li>
+                    <li style="margin-bottom: 5px;"><input type="checkbox" disabled style="margin-right: 8px;"> Teaching & Learning Activities are appropriate</li>
+                    <li style="margin-bottom: 5px;"><input type="checkbox" disabled style="margin-right: 8px;"> References and textbooks are updated (last 5 years)</li>
+                </ul>
+
+                <h4 style="margin-bottom: 10px; color: var(--accent-secondary);">III. Reviewer Remarks</h4>
+                <div style="width: 100%; height: 60px; border: 1px dashed #ccc; background: white; margin-bottom: 15px;"></div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+                    <div style="text-align: center;">
+                        <div style="border-bottom: 1px solid #000; width: 200px; margin-bottom: 5px;"></div>
+                        <small>Reviewer's Signature over Printed Name</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions" style="justify-content: center;">
+                <button type="button" class="submit-btn" style="background: #e5e7eb; color: #333;" onclick="closeReviewFormModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openReviewFormModal() {
+            document.getElementById('reviewFormModal').style.display = 'flex';
+        }
+        function closeReviewFormModal() {
+            document.getElementById('reviewFormModal').style.display = 'none';
+        }
+    </script>
     <script>
         window.USER_ROLE = "<%= locals.user && locals.user.role ? locals.user.role.toLowerCase() : '' %>";
     </script>
