@@ -377,7 +377,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getStatusInfo(status) {
         switch(status) {
-            case 'Pending': return { cssClass: 'status-pending', label: 'Pending' };
+            case 'Pending Endorsement':
+            case 'Pending': return { cssClass: 'status-pending', label: 'Pending Endorsement' };
             case 'Endorsed': 
             case 'Endorsed to Dean': return { cssClass: 'status-endorsed', label: 'Endorsed to Dean' };
             case 'Approved': return { cssClass: 'status-approved', label: 'Approved by Dean' };
@@ -434,7 +435,7 @@ window.openDraftModal = function (syllabusId, hasDraft, status) {
     const btn = document.getElementById('draftActionBtn');
     const modalTitle = document.getElementById('draftModalTitle');
 
-    const RestrictedStatuses = ['Approved', 'Pending', 'Archived', 'Endorsed', 'Endorsed to Dean'];
+    const RestrictedStatuses = ['Approved', 'Pending Endorsement', 'Archived', 'Endorsed', 'Endorsed to Dean'];
     const isRestricted = RestrictedStatuses.includes(status);
     const isVerified = status === 'Archived';
 
@@ -448,6 +449,25 @@ window.openDraftModal = function (syllabusId, hasDraft, status) {
             msg.innerText = 'This syllabus has been verified by HR.';
             btn.innerText = 'View Syllabus';
             btn.onclick = () => window.location.href = `/syllabus/preview/${syllabusId}`;
+
+            // Add CO Assessment Evaluation button
+            const coReportBtn = document.createElement('button');
+            coReportBtn.id = 'coReportBtnId_PC';
+            coReportBtn.className = 'submit-btn';
+            coReportBtn.innerHTML = '<i class="fas fa-clipboard-check" style="margin-right: 6px;"></i> CO Assessment Evaluation';
+            coReportBtn.style.width = '100%';
+            coReportBtn.style.justifyContent = 'center';
+            coReportBtn.style.background = '#1976d2';
+            coReportBtn.style.color = 'white';
+            coReportBtn.style.marginTop = '10px';
+            coReportBtn.onclick = () => window.openDashboardCoReport(syllabusId, false); // PC can also edit
+
+            // Remove previous if exists
+            const existingCoBtn = btn.parentNode.querySelector('#coReportBtnId_PC');
+            if (existingCoBtn) existingCoBtn.remove();
+            
+            btn.parentNode.insertBefore(coReportBtn, btn.nextSibling);
+
         } else if (isRestricted) {
             msg.innerText = `This syllabus is currently ${status}. Editing is disabled.`;
             btn.innerText = 'View Syllabus Draft';

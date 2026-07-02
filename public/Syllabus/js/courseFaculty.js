@@ -81,12 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getStatusInfo(status) {
         switch(status) {
-            case 'Pending': return { cssClass: 'status-pending', label: 'Pending' };
+            case 'Pending Endorsement': 
+            case 'Pending': return { cssClass: 'status-pending', label: 'Pending Endorsement' };
             case 'Endorsed': 
             case 'Endorsed to Dean': return { cssClass: 'status-endorsed', label: 'Endorsed to Dean' };
             case 'Approved': return { cssClass: 'status-approved', label: 'Approved by Dean' };
             case 'Archived': return { cssClass: 'status-archived', label: 'Verified by HR' };
             case 'Rejected': case 'Returned': return { cssClass: 'status-rejected', label: status };
+            case 'Draft': return { cssClass: 'status-pending', label: 'Saved as Draft' };
+            case 'Pending Faculty Signature': return { cssClass: 'status-pending', label: 'Pending Faculty Signature' };
             case 'Returned to PC': return { cssClass: 'status-returned', label: 'Returned to PC' };
             default: return { cssClass: 'status-no-draft', label: status || 'No Syllabus Draft' };
         }
@@ -177,7 +180,7 @@ window.openDraftModal = async function (syllabusId, hasDraft, status, courseTitl
     const downloadBtn = document.getElementById('draftDownloadBtn');
     const modalTitle = document.getElementById('draftModalTitle');
 
-    const RestrictedStatuses = ['Approved', 'Pending', 'Archived', 'Endorsed', 'Endorsed to Dean'];
+    const RestrictedStatuses = ['Approved', 'Pending Endorsement', 'Archived', 'Endorsed', 'Endorsed to Dean'];
     const isRestricted = RestrictedStatuses.includes(status);
     const isVerified = status === 'Archived';
 
@@ -226,6 +229,41 @@ window.openDraftModal = async function (syllabusId, hasDraft, status, courseTitl
                     };
                 }
             }
+
+            // Req 7: Add 'Update Date Covered' button for end-of-term editing
+            const dateCoveredBtn = document.createElement('button');
+            dateCoveredBtn.id = 'dateCoveredBtnId';
+            dateCoveredBtn.className = 'submit-btn';
+            dateCoveredBtn.innerHTML = '<i class="fas fa-calendar-check" style="margin-right: 6px;"></i> Update Date Covered';
+            dateCoveredBtn.style.width = '100%';
+            dateCoveredBtn.style.justifyContent = 'center';
+            dateCoveredBtn.style.background = '#673ab7';
+            dateCoveredBtn.style.color = 'white';
+            dateCoveredBtn.onclick = () => window.location.href = `/syllabus/schedule/${syllabusId}`;
+            
+            // Req 9: Add 'CO Assessment Evaluation' button for end-of-term editing
+            const coReportBtn = document.createElement('button');
+            coReportBtn.id = 'coReportBtnId';
+            coReportBtn.className = 'submit-btn';
+            coReportBtn.innerHTML = '<i class="fas fa-clipboard-check" style="margin-right: 6px;"></i> CO Assessment Evaluation';
+            coReportBtn.style.width = '100%';
+            coReportBtn.style.justifyContent = 'center';
+            coReportBtn.style.background = '#1976d2';
+            coReportBtn.style.color = 'white';
+            coReportBtn.style.marginTop = '10px';
+            coReportBtn.onclick = () => window.openDashboardCoReport(syllabusId, false);
+
+            // Remove previous if exists
+            const existingCoBtn = btn.parentNode.querySelector('#coReportBtnId');
+            if (existingCoBtn) existingCoBtn.remove();
+            
+            // Remove previous if exists
+            const existing = btn.parentNode.querySelector('#dateCoveredBtnId');
+            if (existing) existing.remove();
+            
+            btn.parentNode.insertBefore(dateCoveredBtn, btn);
+            btn.parentNode.insertBefore(coReportBtn, btn);
+
         } else if (isRestricted) {
             msg.innerText = `This syllabus is currently ${status}. Editing is disabled.`;
             btn.innerText = 'View Syllabus Draft';
@@ -240,12 +278,14 @@ window.openDraftModal = async function (syllabusId, hasDraft, status, courseTitl
             btn.onclick = () => window.location.href = `/faculty/submit/${syllabusId}`;
         } else {
             msg.innerText = 'A syllabus draft already exists for this course.';
-            btn.innerText = 'View Syllabus Draft';
-            btn.onclick = () => window.location.href = `/syllabus/preview/${syllabusId}`;
+            btn.innerText = 'Edit Syllabus Draft';
+            btn.onclick = () => window.location.href = `/syllabus/create/${syllabusId}`;
         }
     } else {
-        msg.innerText = "There's no syllabus draft at the moment. Please wait for the Program Chair to provide one.";
-        btn.style.display = 'none'; // Hide action button since they can't create drafts
+        msg.innerText = "There's no syllabus draft at the moment.";
+        btn.innerText = '+ Add Syllabus Draft';
+        btn.style.display = 'flex'; 
+        btn.onclick = () => { window.closeDraftModal(); window.location.href = `/syllabus/create/${syllabusId}`; };
     }
 
     if (modal) modal.style.display = 'flex';
@@ -340,6 +380,9 @@ window.addEventListener('click', function (event) {
     // ---- Public: Open signature modal ----
     window.openSignatureModal = async function (syllabusId) {
         currentSyllabusId = syllabusId;
+        const form = document.getElementById('signatureForm');
+        if (form) form.reset();
+        
         const modal = document.getElementById('signatureModal');
         if (!modal) return;
 
@@ -486,6 +529,5 @@ window.addEventListener('click', function (event) {
                 initCanvas();
                 setStatusMsg('');
             });
-        }
     });
 })();

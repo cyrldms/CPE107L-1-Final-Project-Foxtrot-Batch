@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Endorse Syllabus â€” Program Chair</title>
+    <title>Submit Syllabus</title>
     <link rel="icon" type="image/x-icon" href="/common/img/chalkboardLogo.ico">
 
     <!-- School palette variables -->
@@ -71,7 +71,8 @@
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Pre-requisite</td><td><%= locals.syl && locals.syl.preRequisite ? locals.syl.preRequisite : 'None' %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Co-requisite</td><td><%= locals.syl && locals.syl.coRequisite ? locals.syl.coRequisite : 'None' %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Credit Units</td><td><%= locals.syl && locals.syl.units ? locals.syl.units : 'N/A' %></td></tr>
-                        <tr><td style="font-weight:bold; background:#f9f9f9;">Lecture Hours/Week</td><td><%= locals.syl && locals.syl.classSchedule ? locals.syl.classSchedule : '0' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Lecture Hours/Week</td><td><%= (locals.syl && locals.syl.lectureHours && locals.syl.lectureHours !== '0') ? locals.syl.lectureHours : '-' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Laboratory Hours/Week</td><td><%= (locals.syl && locals.syl.labHours && locals.syl.labHours !== '0') ? locals.syl.labHours : '-' %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Course Design</td><td><%= locals.syl && locals.syl.courseDesign ? locals.syl.courseDesign : 'Not set' %></td></tr>
                     </table>
 
@@ -248,14 +249,14 @@
                     <h3 class="ad-section-heading" data-section-key="evaluation">Course Evaluation</h3>
                     <% if (locals.evaluations && locals.evaluations.length > 0) { %>
                         <p style="font-size:0.85rem; color:#555; margin-bottom:10px;">The final grade of the student is based on the following components:</p>
-                        <table class="ad-data-table" style="font-size: 0.85rem; text-align:center;">
+                        <table class="ad-data-table" style="font-size: 0.85rem; text-align:center; margin-bottom: 8px;">
                             <thead>
                                 <tr>
                                     <th>Module Code</th>
                                     <th>CO</th>
                                     <th style="text-align:left;">Mediating Outcomes</th>
-                                    <th>LT %</th>
-                                    <th>PE %</th>
+                                    <th>FA %</th>
+                                    <th>SA %</th>
                                     <th>Modular Weight %</th>
                                     <th>Final Weight %</th>
                                 </tr>
@@ -274,7 +275,7 @@
                                 <% }); %>
                             </tbody>
                         </table>
-                        <p style="font-size: 0.75rem; font-style: italic; margin-top: 5px;">*OT – Online Tasks/Quiz/Lab; LE – Long Examination; FP – Final Project</p>
+                        <p style="font-size: 0.75rem; font-style: italic; margin-top: 8px; margin-bottom: 2.5rem;">*OT – Online Tasks/Quiz/Lab; LE – Long Examination; FP – Final Project</p>
                     <% } else { %>
                         <p class="ad-no-content">No course evaluation provided.</p>
                     <% } %>
@@ -305,14 +306,10 @@
                     </div>
 
                     <h3 class="ad-section-heading" data-section-key="textbook">Textbook</h3>
-                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333;">
-                        <%= locals.syl && locals.syl.textbook ? locals.syl.textbook : 'No textbook specified.' %>
-                    </div>
+                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333; white-space: pre-wrap;"><%= locals.syl && locals.syl.textbook ? locals.syl.textbook : 'No textbook specified.' %></div>
 
                     <h3 class="ad-section-heading" data-section-key="references">References</h3>
-                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333; white-space: pre-wrap;">
-                        <%= locals.syl && locals.syl.references ? locals.syl.references : 'No references specified.' %>
-                    </div>
+                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333; white-space: pre-wrap;"><%= locals.syl && locals.syl.references ? locals.syl.references : 'No references specified.' %></div>
                     <h3 class="ad-section-heading" data-section-key="assessment">Course Outcomes Assessment</h3>
                     <% if (locals.cos && locals.cos.length > 0) { %>
                         <p style="font-size:0.85rem; color:#555; margin-bottom:10px;">Achievement of course outcomes is based on the following:</p>
@@ -349,6 +346,8 @@
                                     <div id="preview-signature-img-container" class="ad-signature-img-container" style="margin-bottom:6px; height:60px; max-width:150px; margin:0 auto;">
                                         <% if (locals.facultySignature) { %>
                                             <img src="<%= locals.facultySignature %>" alt="Faculty Signature" style="max-height:100%; max-width:100%; object-fit:contain;">
+                                        <% } else { %>
+                                            <div style="height:60px; border-bottom:1px solid #999; width:150px; margin:0 auto 6px;"></div>
                                         <% } %>
                                     </div>
                                     <p id="preview-signatory-name" class="ad-signature-name" style="font-weight:700; font-size:0.9rem; margin:4px 0 2px;"><%= locals.facultySignatoryName || 'FACULTY' %></p>
@@ -425,10 +424,17 @@
                 <!-- â”€â”€ Approval Progress Tracker â”€â”€ -->
                 <div class="ad-tracker">
                     <% 
+                    let facultyStatus = 'approved';
+                    let facultyLabel = 'Submitted';
                     let pcStatus = 'ongoing';
                     let pcLabel = 'On-Going';
                     
-                    if (locals.workflowStep === 'approval') {
+                    if (locals.workflowStep === 'faculty_submission') {
+                        facultyStatus = 'ongoing';
+                        facultyLabel = 'On-Going';
+                        pcStatus = 'pending';
+                        pcLabel = 'Pending Endorsement';
+                    } else if (locals.workflowStep === 'approval') {
                         if (locals.approvalState === 'PC_Approved') {
                             pcStatus = 'approved';
                             pcLabel = 'Endorsed';
@@ -441,10 +447,10 @@
                     }
 
                     const steps = [
-                        { role: 'Faculty', label: 'Submitted', status: 'approved' },
+                        { role: 'Faculty', label: facultyLabel, status: facultyStatus },
                         { role: 'Program Chair', label: pcLabel, status: pcStatus },
-                        { role: 'Dean', label: 'Pending', status: 'pending' },
-                        { role: 'HR', label: 'Pending', status: 'pending' }
+                        { role: 'Dean', label: 'Pending Endorsement', status: 'pending' },
+                        { role: 'HR', label: 'Pending Endorsement', status: 'pending' }
                     ]; 
                     %>
 
@@ -481,11 +487,11 @@
                     <div class="ad-status-select-wrapper">
                         <span class="ad-status-indicator" id="status-indicator"></span>
                         <select id="approval-status" class="ad-status-select">
-                            <option value="" disabled <%= (!locals.approvalState || locals.approvalState === 'Pending') && locals.currentStatus === 'Pending' ? 'selected' : '' %>>-- Select Status --</option>
+                            <option value="" disabled <%= (!locals.approvalState || locals.approvalState === 'Pending Endorsement') && locals.currentStatus === 'Pending Endorsement' ? 'selected' : '' %>>-- Select Status --</option>
                             <% if (locals.workflowStep === 'faculty_submission') { %>
                                 <option value="<%= locals.optionApproveValue || 'Signed by Faculty' %>" 
                                     <%= (locals.approvalState === locals.optionApproveValue || locals.currentStatus === locals.optionApproveValue) ? 'selected' : '' %>>
-                                    Sign & Submit to Program Chair
+                                    Submit Syllabus
                                 </option>
                             <% } else { %>
                                 <option value="<%= locals.optionApproveValue || 'PC_Approved' %>" 
@@ -504,7 +510,7 @@
                 <% if (locals.workflowStep === 'approval' || locals.workflowStep === 'endorsement' || locals.workflowStep === 'faculty_submission') { %>
                 <div class="ad-sidebar-section" id="signature-section" style="display: none;">
                     <label class="ad-sidebar-label">Signatory Name</label>
-                    <input type="text" id="signatory-name-input" class="ad-comments-box" value="<%= locals.pcSignatoryName || (locals.user ? locals.user.firstName + ' ' + locals.user.lastName : '') %>" placeholder="e.g. Dr. Juan dela Cruz" style="margin-bottom: 15px; padding: 10px 12px; height: 40px; box-sizing: border-box;">
+                    <input type="text" id="signatory-name-input" class="ad-comments-box" value="<%= locals.facultySignatoryName || (locals.syl && locals.syl.assignedInstructor ? locals.syl.assignedInstructor.firstName + ' ' + locals.syl.assignedInstructor.lastName : (locals.user ? locals.user.firstName + ' ' + locals.user.lastName : '')) %>" placeholder="e.g. Dr. Juan dela Cruz" style="margin-bottom: 15px; padding: 10px 12px; height: 40px; box-sizing: border-box;">
 
                     <label class="ad-sidebar-label">E-Signature</label>
 
@@ -546,7 +552,7 @@
                         Save as PDF
                     </button>
                     <button type="button" class="ad-btn-action ad-btn-submit" id="btn-submit">
-                        <%= locals.workflowStep === 'faculty_submission' ? 'Sign and Submit to Program Chair' : 'Endorse Syllabus' %>
+                        <%= locals.workflowStep === 'faculty_submission' ? 'Submit Syllabus' : 'Endorse Syllabus' %>
                     </button>
                 </div>
             </aside>

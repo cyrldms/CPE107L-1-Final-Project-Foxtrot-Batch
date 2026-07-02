@@ -20,6 +20,7 @@ scheduleSyllabusRoutes.get('/:syllabusId', async (req, res) => {
         const schedules = await WeeklySchedule.find({ syllabusID: syllabusId }).sort({ week: 1 });
         const evaluation = await CourseEvaluationPerCO.find({ syllabusID: syllabusId });
         const courseOutcomes = await CourseOutcomes.find({ syllabusID: syllabusId });
+        const approvalData = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId });
 
         res.render('Syllabus/scheduleSyllabus', {
             currentPageCategory: "syllabus",
@@ -27,6 +28,7 @@ scheduleSyllabusRoutes.get('/:syllabusId', async (req, res) => {
             schedules: schedules || [],
             evaluation: evaluation || [],
             assessment: courseOutcomes || [],
+            approvalStatus: approvalData ? approvalData.status : 'Not Submitted',
             userRole: req.session.user ? req.session.user.role : '',
             userId: req.session.user ? req.session.user.id : ''
         });
@@ -68,8 +70,9 @@ scheduleSyllabusRoutes.post('/submit', async (req, res) => {
         existingSyllabus.courseTitle = payload.basicInfo.courseTitle || existingSyllabus.courseTitle;
         existingSyllabus.preRequisite = payload.basicInfo.preRequisite || "";
         existingSyllabus.coRequisite = payload.basicInfo.coRequisite || "";
-        existingSyllabus.units = parseInt(payload.basicInfo.units) || existingSyllabus.units || 0;
-        existingSyllabus.classSchedule = parseInt(payload.basicInfo.classSchedule) || existingSyllabus.classSchedule || 0;
+        existingSyllabus.units = parseFloat(payload.basicInfo.units) || existingSyllabus.units || 0;
+        existingSyllabus.lectureHours = parseFloat(payload.basicInfo.lectureHours) || existingSyllabus.lectureHours || 0;
+        existingSyllabus.labHours = parseFloat(payload.basicInfo.labHours) || existingSyllabus.labHours || 0;
         existingSyllabus.courseDesign = payload.basicInfo.courseDesign || "";
         existingSyllabus.courseDescription = payload.basicInfo.courseDescription || "";
         existingSyllabus.term = payload.basicInfo.term || "";
@@ -196,22 +199,28 @@ scheduleSyllabusRoutes.post('/submit', async (req, res) => {
         }
 
         // 7. Create Approval Status — auto-skip based on submitter role
-        const userRole = req.session?.user?.role || '';
+        const userRole = (req.session?.user?.role || '').toLowerCase();
         const userName = req.session?.user
             ? `${req.session.user.firstName || ''} ${req.session.user.lastName || ''}`.trim()
             : '';
         const reqSignatoryName = req.body.signatoryName || '';
         const reqSignatureData = req.body.signatureData || null;
+        const reqActionType = req.body.actionType || 'submit';
 
-        let initialStatus = 'Pending';
+        let initialStatus = 'Pending Endorsement';
         let initialRemarks = 'Syllabus Initial Submission';
         const approvalData = { syllabusID };
 
-        if (userRole === 'Program-Chair' || userRole === 'program-chair') {
+        if (reqActionType === 'draft') {
+            initialStatus = 'Draft';
+            initialRemarks = 'Saved as Draft';
+        } else if (userRole === 'program-chair') {
             initialStatus = 'Pending Faculty Signature';
             initialRemarks = 'Awaiting Faculty Signature';
-
-        } else if (userRole === 'Dean' || userRole === 'dean') {
+        } else if (userRole === 'faculty' || userRole === 'professor') {
+            initialStatus = 'Pending Faculty Signature';
+            initialRemarks = 'Submitted for Signature by Faculty';
+        } else if (userRole === 'dean') {
             // Dean submits → auto-endorse + auto-approve, skip to HR
             initialStatus = 'Approved';
             initialRemarks = 'Auto-approved (submitted by Dean)';
@@ -223,23 +232,84 @@ scheduleSyllabusRoutes.post('/submit', async (req, res) => {
             approvalData.Dean_Remarks = 'Auto-approved by Dean';
             approvalData.Dean_SignatoryName = reqSignatoryName || userName;
             approvalData.Dean_Signature = reqSignatureData;
-
+            
             // Apply signature to Faculty "Prepared By" as well
             approvalData.Faculty_SignatoryName = reqSignatoryName || userName;
             approvalData.Faculty_Signature = reqSignatureData;
         }
 
-        if (userRole === 'Program-Chair' || userRole === 'program-chair' || userRole === 'Dean' || userRole === 'dean') {
-            approvalData.status = initialStatus;
-            approvalData.remarks = initialRemarks;
-            const approval = new SyllabusApprovalStatus(approvalData);
-            await approval.save();
-        }
+        approvalData.status = initialStatus;
+        approvalData.remarks = initialRemarks;
+        
+        await SyllabusApprovalStatus.findOneAndUpdate(
+            { syllabusID: syllabusID },
+            { $set: approvalData },
+            { upsert: true, new: true }
+        );
 
         res.json({ success: true, syllabusId: syllabusID });
     } catch (error) {
         console.error("Error in /syllabus/schedule/submit:", error);
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+scheduleSyllabusRoutes.post('/update-date-covered', async (req, res) => {
+    try {
+        const { syllabusID, dates } = req.body;
+        if (!syllabusID || !dates) {
+            return res.status(400).json({ success: false, error: "Missing payload data." });
+        }
+
+        // Fetch existing schedule
+        const schedules = await WeeklySchedule.find({ syllabusID }).sort({ week: 1 });
+        
+        for (let i = 0; i < schedules.length; i++) {
+            if (dates[i] !== undefined) {
+                schedules[i].dateCovered = dates[i];
+                await schedules[i].save();
+            }
+        }
+
+        return res.status(200).json({ success: true, message: "Date Covered updated successfully." });
+    } catch (err) {
+        console.error("Error updating Date Covered:", err);
+        return res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+});
+
+scheduleSyllabusRoutes.get('/api/co-report/:syllabusId', async (req, res) => {
+    try {
+        const syllabusId = req.params.syllabusId;
+        const evaluation = await CourseEvaluationPerCO.find({ syllabusID: syllabusId });
+        const outcomes = await CourseOutcomes.find({ syllabusID: syllabusId });
+
+        return res.status(200).json({ success: true, evaluation, outcomes });
+    } catch (err) {
+        console.error("Error fetching CO Report data:", err);
+        return res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+});
+
+scheduleSyllabusRoutes.post('/update-co-report', async (req, res) => {
+    try {
+        const { syllabusID, coData } = req.body;
+        if (!syllabusID || !coData) {
+            return res.status(400).json({ success: false, error: "Missing payload data." });
+        }
+
+        for (const data of coData) {
+            await CourseEvaluationPerCO.findByIdAndUpdate(data.id, {
+                studentsPassed: parseInt(data.passed) || 0,
+                studentsFailed: parseInt(data.failed) || 0,
+                analysis: data.analysis || ""
+            });
+        }
+
+        return res.status(200).json({ success: true, message: "CO Report updated successfully." });
+    } catch (err) {
+        console.error("Error updating CO Report:", err);
+        return res.status(500).json({ success: false, error: "Internal Server Error" });
     }
 });
 

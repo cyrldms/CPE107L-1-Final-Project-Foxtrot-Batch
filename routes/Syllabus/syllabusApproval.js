@@ -13,7 +13,7 @@ const DUMMY_DRAFTS = [
         courseTitle: 'Software Design',
         instructor: 'Juan dela Cruz',
         img: 'https://picsum.photos/seed/cpe101/400/200',
-        status: 'Pending',
+        status: 'Pending Endorsement',
         approvalDate: null,
         approvedBy: null,
         remarks: 'Awaiting dean review.',
@@ -37,7 +37,7 @@ const DUMMY_DRAFTS = [
         courseTitle: 'Digital Electronics: Logic Circuits and Design',
         instructor: 'Jose Reyes',
         img: 'https://picsum.photos/seed/cpe101l/400/200',
-        status: 'Pending',
+        status: 'Pending Endorsement',
         approvalDate: null,
         approvedBy: null,
         remarks: 'Please add course outcomes table.',
@@ -147,7 +147,7 @@ syllabusApprovalRouter.get('/', async (req, res) => {
             pendingCount = drafts.filter(d => d.status === 'Endorsed' || d.status === 'Endorsed to Dean').length;
             approvedCount = drafts.filter(d => d.status === 'Approved').length;
         } else {
-            pendingCount = drafts.filter(d => d.status === 'Pending').length;
+            pendingCount = drafts.filter(d => d.status === 'Pending Endorsement').length;
             approvedCount = drafts.filter(d => d.status === 'Approved').length;
         }
         const rejectedCount = drafts.filter(d => d.status === 'Rejected').length;

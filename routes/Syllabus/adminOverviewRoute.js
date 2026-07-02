@@ -71,6 +71,27 @@ const DUMMY_ITEMS = [
 ];
 
 /* -----------------------------------------------------------------------
+   GET /peo-so  →  Redirects Admin to PEO/SO Global Template Editor
+   ----------------------------------------------------------------------- */
+adminOverviewRouter.get('/peo-so', async (req, res) => {
+    try {
+        let template = await Syllabus.findOne({ courseCode: '__GLOBAL_TEMPLATE__' });
+        if (!template) {
+            template = new Syllabus({
+                courseCode: '__GLOBAL_TEMPLATE__',
+                courseTitle: 'Global Standard Template',
+                userID: req.session?.user?.id || 'admin'
+            });
+            await template.save();
+        }
+        res.redirect(`/syllabus/create/${template._id}?isGlobal=true`);
+    } catch (error) {
+        console.error('Error fetching global template:', error);
+        res.redirect('/syllabus/hr');
+    }
+});
+
+/* -----------------------------------------------------------------------
    GET /syllabus/hr  →  HR Archive Queue
    ----------------------------------------------------------------------- */
 adminOverviewRouter.get('/', async (req, res) => {
@@ -184,8 +205,8 @@ adminOverviewRouter.get('/review/:syllabusId', async (req, res) => {
             mappings,
             schedules,
             evaluations,
-            currentStatus: approval ? approval.status : 'Pending',
-            currentStatus: approval ? approval.status : 'Pending',
+            currentStatus: approval ? approval.status : 'Pending Endorsement',
+            currentStatus: approval ? approval.status : 'Pending Endorsement',
             existingComment: approval ? (approval.HR_Remarks || '') : '',
             deanRemarks: approval ? (approval.Dean_Remarks || '') : '',
             pcRemarks: approval ? (approval.PC_Remarks || approval.remarks || '') : '',

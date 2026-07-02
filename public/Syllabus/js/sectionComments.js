@@ -38,6 +38,7 @@
         wrapper.style.display = 'flex';
         wrapper.style.justifyContent = 'space-between';
         wrapper.style.alignItems = 'center';
+        wrapper.style.marginBottom = '15px';
         
         header.parentNode.insertBefore(wrapper, header);
         wrapper.appendChild(header);

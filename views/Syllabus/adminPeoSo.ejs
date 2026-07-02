@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -142,9 +142,9 @@
     <div id="pso-toast" class="pso-toast" role="status" aria-live="polite"></div>
 
     <script>
-        window.IS_READ_ONLY = <%- JSON.stringify(isReadOnly) %>;
-        window.INITIAL_PEOS = <%- JSON.stringify(peos) %>;
-        window.INITIAL_SOS  = <%- JSON.stringify(sos) %>;
+        window.IS_READ_ONLY = <%- JSON.stringify(locals.isReadOnly || false) %>;
+        window.INITIAL_PEOS = <%- JSON.stringify(locals.peos || null) %>;
+        window.INITIAL_SOS  = <%- JSON.stringify(locals.sos || null) %>;
     </script>
     <script src="/Syllabus/js/adminPeoSo.js"></script>
 </body>

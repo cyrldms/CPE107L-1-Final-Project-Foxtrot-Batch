@@ -214,12 +214,12 @@
         <div class="course-info-row">
             <div class="info-label">LECTURE HOURS PER WEEK</div>
             <div class="info-colon">:</div>
-            <div class="info-value"><%= syl.classSchedule || '0' %></div>
+            <div class="info-value"><%= (locals.syl && locals.syl.lectureHours && locals.syl.lectureHours !== '0' && locals.syl.lectureHours !== 0) ? locals.syl.lectureHours : '-' %></div>
         </div>
         <div class="course-info-row">
             <div class="info-label">LABORATORY HOURS PER WEEK</div>
             <div class="info-colon">:</div>
-            <div class="info-value">0</div>
+            <div class="info-value"><%= (locals.syl && locals.syl.labHours && locals.syl.labHours !== '0' && locals.syl.labHours !== 0) ? locals.syl.labHours : '-' %></div>
         </div>
         <div class="course-info-row">
             <div class="info-label">COURSE DESIGN</div>

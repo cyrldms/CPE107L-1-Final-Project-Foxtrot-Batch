@@ -233,6 +233,30 @@
                     </div>
                 </div>
 
+                <div class="table-container" style="margin-bottom: 20px;">
+                    <div class="table-title">
+                        <span class="material-symbols-outlined">school</span> Curriculum Completion
+                    </div>
+                    <div class="metrics-grid" style="margin-top: 15px;">
+                        <% if (Object.keys(locals.curriculumMetrics).length > 0) { %>
+                            <% for (const [program, data] of Object.entries(locals.curriculumMetrics)) { %>
+                                <div class="metric-card percent" style="border-color: #17a2b8;">
+                                    <span class="metric-title"><%= program %> Syllabi</span>
+                                    <div class="metric-value" style="font-size: 1.2rem;">
+                                        <%= data.completed %> / <%= data.total %>
+                                        <span style="font-size: 0.8rem; color: #6c757d; font-weight: normal; margin-left: 8px;">(<%= data.percentage %>%)</span>
+                                    </div>
+                                    <div class="progress-wrapper">
+                                        <div class="progress-fill" style="width: <%= data.percentage %>%; background: #17a2b8;"></div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% } else { %>
+                            <p style="color: #6c757d; font-size: 0.9rem; padding: 10px;">No curriculum data available.</p>
+                        <% } %>
+                    </div>
+                </div>
+
                 <div class="table-container">
                     <div class="table-title">
                         <span class="material-symbols-outlined">list_alt</span> All Syllabi Status

@@ -10,7 +10,10 @@ const courseEvaluationPerCOSchema = new Schema({
   finalProjectWeight: Number,
   moduleWeight: Number,
   finalWeight: Number,
-  mediatingOutcome: String
+  mediatingOutcome: String,
+  studentsPassed: { type: Number, default: 0 },
+  studentsFailed: { type: Number, default: 0 },
+  analysis: { type: String, default: "" }
 });
 
 const CourseEvaluationPerCO = mainDB.models.CourseEvaluationPerCO || mainDB.model("CourseEvaluationPerCO", courseEvaluationPerCOSchema);

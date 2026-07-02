@@ -84,9 +84,9 @@
                 <!-- ── Approval Progress Tracker ── -->
                 <div class="ad-tracker">
                     <% const steps=[ { role: 'Faculty' , label: 'Submitted' , status: 'approved' }, { role: 'Technical'
-                        , label: 'On-Going' , status: 'ongoing' }, { role: 'Program Chair' , label: 'Pending' ,
-                        status: 'pending' }, { role: 'Dean' , label: 'Pending' , status: 'pending' }, { role: 'HR' ,
-                        label: 'Pending' , status: 'pending' } ]; %>
+                        , label: 'On-Going' , status: 'ongoing' }, { role: 'Program Chair' , label: 'Pending Endorsement' ,
+                        status: 'pending' }, { role: 'Dean' , label: 'Pending Endorsement' , status: 'pending' }, { role: 'HR' ,
+                        label: 'Pending Endorsement' , status: 'pending' } ]; %>
 
                         <div class="ad-tracker-steps">
                             <% steps.forEach(function(step, idx) { %>
@@ -125,7 +125,7 @@
                             </option>
                             <option value="Returned" <%=locals.currentStatus==='Returned' ? 'selected' : '' %>>Returned
                             </option>
-                            <option value="Pending" <%=locals.currentStatus==='Pending' ? 'selected' : '' %>>Pending
+                            <option value="Pending Endorsement" <%=locals.currentStatus==='Pending Endorsement' ? 'selected' : '' %>>Pending
                             </option>
                         </select>
                     </div>

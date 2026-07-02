@@ -6,8 +6,8 @@ const syllabusTrackingRoutes = express.Router();
 
 syllabusTrackingRoutes.get('/', async (req, res) => {
     try {
-        // Fetch all syllabi and populate instructor
-        const allSyllabi = await Syllabus.find().populate('assignedInstructor').lean();
+        // Fetch all syllabi and populate instructor, filtering out the global template
+        const allSyllabi = await Syllabus.find({ courseCode: { $ne: '__GLOBAL_TEMPLATE__' } }).populate('assignedInstructor').lean();
         
         // Fetch all approval statuses
         const allStatuses = await SyllabusApprovalStatus.find().lean();
@@ -17,12 +17,21 @@ syllabusTrackingRoutes.get('/', async (req, res) => {
         let inProgressCount = 0;
         let noDraftCount = 0;
         
+        const curriculumMetrics = {};
+        
         const trackingList = allSyllabi.map(syl => {
             const approval = allStatuses.find(a => a.syllabusID && a.syllabusID.toString() === syl._id.toString());
             const status = approval ? approval.status : 'No Syllabus Draft';
             
+            const program = syl.programPreparedFor || 'CPE';
+            if (!curriculumMetrics[program]) {
+                curriculumMetrics[program] = { total: 0, completed: 0, percentage: 0 };
+            }
+            curriculumMetrics[program].total++;
+            
             if (status === 'Approved' || status === 'Archived') {
                 completedCount++;
+                curriculumMetrics[program].completed++;
             } else if (status === 'No Syllabus Draft' || status === 'Not Submitted') {
                 noDraftCount++;
             } else {
@@ -37,10 +46,17 @@ syllabusTrackingRoutes.get('/', async (req, res) => {
                 schoolYear: syl.schoolYear || 'N/A',
                 status: status,
                 lastUpdated: approval ? (approval.approvalDate || approval.updatedAt || new Date()) : syl.updatedAt,
-                syllabusId: syl._id.toString()
+                syllabusId: syl._id.toString(),
+                program: program
             };
         });
         
+        // Calculate percentages for curriculums
+        for (const prog in curriculumMetrics) {
+            const cm = curriculumMetrics[prog];
+            cm.percentage = cm.total > 0 ? Math.round((cm.completed / cm.total) * 100) : 0;
+        }
+
         // Sort by course code
         trackingList.sort((a, b) => a.courseCode.localeCompare(b.courseCode));
         
@@ -61,6 +77,7 @@ syllabusTrackingRoutes.get('/', async (req, res) => {
                 noDraft: noDraftCount,
                 completionPercentage
             },
+            curriculumMetrics,
             trackingList,
             currentPageCategory: 'syllabus',
             user: req.session ? req.session.user : null,

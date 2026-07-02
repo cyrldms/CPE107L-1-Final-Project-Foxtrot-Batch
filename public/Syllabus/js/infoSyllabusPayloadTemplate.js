@@ -12,9 +12,8 @@ function saveInfoToSession() {
     const coRequisite = document.querySelectorAll('.content-panel-transparent:nth-of-type(2) .course-editable-text')[1]?.innerText.trim() || '';
     
     const units = document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[0]?.innerText.trim() || '';
-    const lectureHrs = parseInt(document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[1]?.value || '0') || 0;
-    const labHrs = parseInt(document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[2]?.value || '0') || 0;
-    const classSchedule = lectureHrs + labHrs;
+    const lectureHours = parseFloat(document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[1]?.value || '0') || 0;
+    const labHours = parseFloat(document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[2]?.value || '0') || 0;
     
     const courseDesignEl = document.querySelectorAll('.content-panel-transparent:nth-of-type(3) .course-editable-text')[3];
     const courseDesign = courseDesignEl ? (courseDesignEl.tagName === 'SELECT' ? courseDesignEl.value : courseDesignEl.innerText.trim()) : '';
@@ -29,7 +28,7 @@ function saveInfoToSession() {
     const references = document.querySelectorAll('.content-panel-transparent:last-of-type .course-editable-text')[1]?.innerText.trim() || '';
 
     payload.basicInfo = {
-        courseCode, courseTitle, preRequisite, coRequisite, units, classSchedule,
+        courseCode, courseTitle, preRequisite, coRequisite, units, lectureHours, labHours,
         courseDesign, courseDescription, term, schoolYear, programPreparedFor,
         textbook, references
     };

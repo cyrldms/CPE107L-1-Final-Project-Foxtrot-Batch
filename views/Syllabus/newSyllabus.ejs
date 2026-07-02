@@ -134,10 +134,17 @@
             </div>
 
             <div class="button-footer-outer">
-                <button class="next-btn-rect" onclick="saveNewToSession()" type="button">
-                    <span>NEXT</span>
-                    <span class="material-symbols-outlined">arrow_forward</span>
-                </button>
+                <% if (locals.isGlobalTemplate) { %>
+                    <button class="next-btn-rect" onclick="saveNewToSession()" type="button" style="background-color: var(--accent-secondary); width: auto; padding: 0 30px;">
+                        <span>SAVE GLOBAL TEMPLATE</span>
+                        <span class="material-symbols-outlined">save</span>
+                    </button>
+                <% } else { %>
+                    <button class="next-btn-rect" onclick="saveNewToSession()" type="button">
+                        <span>NEXT</span>
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                <% } %>
             </div>
         </main>
     </div>
@@ -145,6 +152,7 @@
     <script>
         window.CURRENT_SYLLABUS_ID = "<%= locals.syllabusId || '' %>";
         window.IS_PEO_SO_LOCKED    = <%= locals.isPeoSoLocked || false %>;
+        window.IS_GLOBAL_TEMPLATE  = <%= locals.isGlobalTemplate || false %>;
         window.SERVER_SYLLABUS_DATA = {
             peos: <%- JSON.stringify(locals.peos || null) %>,
             sos: <%- JSON.stringify(locals.sos || null) %>

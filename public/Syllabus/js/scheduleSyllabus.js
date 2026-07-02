@@ -111,6 +111,11 @@ function addRow(tbody, colCount) {
                 select.appendChild(opt);
             });
             
+            if (window.SYLLABUS_STATUS === 'Archived') {
+                select.disabled = true;
+                select.title = 'Syllabus is finalized.';
+            }
+
             select.addEventListener('mousedown', (e) => e.stopPropagation());
             select.addEventListener('change', (e) => {
                 // Change color based on selection
@@ -119,13 +124,23 @@ function addRow(tbody, colCount) {
             });
             div.appendChild(select);
         } else {
-            // Req 7: Lock Date Covered if syllabus is Archived
-            if (tbody.id === 'schedule-editor-body' && i === 11 && window.SYLLABUS_STATUS === 'Archived') {
-                div.contentEditable = 'false';
-                div.style.backgroundColor = '#f4f4f4';
-                div.title = 'Date Covered cannot be edited after the syllabus is finalized (Archived).';
+            // Req 7: Lock Date Covered if syllabus is NOT Archived, lock the rest if Archived
+            if (window.SYLLABUS_STATUS === 'Archived') {
+                if (tbody.id === 'schedule-editor-body' && i === 11) {
+                    div.contentEditable = 'true';
+                } else {
+                    div.contentEditable = 'false';
+                    div.style.backgroundColor = '#f4f4f4';
+                    div.title = 'Syllabus is finalized.';
+                }
             } else {
-                div.contentEditable = 'true';
+                if (tbody.id === 'schedule-editor-body' && i === 11) {
+                    div.contentEditable = 'false';
+                    div.style.backgroundColor = '#f4f4f4';
+                    div.title = 'Date Covered can only be edited at the end of the term (Archived state).';
+                } else {
+                    div.contentEditable = 'true';
+                }
             }
         }
 
@@ -671,11 +686,10 @@ window.addEventListener('load', () => {
 
 function initSignatureUI() {
     const role = (window.USER_ROLE || '').toLowerCase();
-    const isPcOrDean = role === 'program-chair' || role === 'program chair' || role === 'dean';
     
     // We don't show the overlay here; it is shown in submitSyllabus()
     const overlay = document.getElementById('submit-signature-modal-overlay');
-    if (!overlay || !isPcOrDean) return;
+    if (!overlay) return;
 
     // Close/Cancel Modal
     const hideModal = () => { overlay.style.display = 'none'; };
@@ -833,7 +847,7 @@ function initSignatureUI() {
 }
 
 /* ── Final Submission Integration ── */
-window.submitSyllabus = async function () {
+window.submitSyllabus = async function (actionType = 'submit') {
     try {
         // 1. Get step 1 data
         const key = `syllabusFormDraft_${window.CURRENT_SYLLABUS_ID || 'default'}`;
@@ -943,23 +957,21 @@ window.submitSyllabus = async function () {
         }
 
         // 5. Finalize Submission or Show Modal
-        const role = (window.USER_ROLE || '').toLowerCase();
-        const isPcOrDean = role === 'program-chair' || role === 'program chair' || role === 'dean';
+        payload.actionType = actionType;
 
-        if (isPcOrDean) {
-            window.currentSubmissionPayload = payload;
-            const overlay = document.getElementById('submit-signature-modal-overlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-            } else {
-                // Flashback safe execution if overlay is missing
-                executeFinalSubmit(payload);
-            }
-            return;
-        } else {
-            // Normal fallback for faculties
+        if (actionType === 'draft') {
             executeFinalSubmit(payload);
+            return;
         }
+
+        // Always skip modal and use dedicated signature page for submit action
+        if (actionType === 'submit') {
+            executeFinalSubmit(payload);
+            return;
+        }
+
+        // Normal fallback for draft
+        executeFinalSubmit(payload);
 
     } catch (error) {
         console.error("Submission failed:", error);
@@ -982,13 +994,26 @@ async function executeFinalSubmit(payload) {
             const scheduleKey = `syllabus_draft_schedule_${window.CURRENT_SYLLABUS_ID || 'default'}`;
             const infoKey = `syllabus_draft_info_${window.CURRENT_SYLLABUS_ID || 'default'}`;
             
-            sessionStorage.removeItem(draftKey);
-            sessionStorage.removeItem(scheduleKey);
-            sessionStorage.removeItem(infoKey);
+            // Removed sessionStorage.removeItem so that if the user clicks BACK, 
+            // the data is preserved and they won't encounter a "Missing data" error.
+            // sessionStorage.removeItem(draftKey);
+            // sessionStorage.removeItem(scheduleKey);
+            // sessionStorage.removeItem(infoKey);
             
-            alert('Syllabus successfully compiled and submitted for review!');
+            if (payload.actionType === 'draft') {
+                alert('Syllabus saved as a draft.');
+            } else if (payload.actionType === 'submit') {
+                alert('Syllabus saved. Awaiting Faculty Signature.');
+            } else {
+                alert('Syllabus successfully compiled and submitted for review!');
+            }
 
             // Role-based redirection
+            if (payload.actionType === 'submit') {
+                window.location.href = `/faculty/submit/${window.CURRENT_SYLLABUS_ID}`;
+                return;
+            }
+
             const role = (window.USER_ROLE || '').toLowerCase();
             if (role === 'dean') {
                 window.location.href = `/syllabus/${window.USER_ID}`;
@@ -1113,6 +1138,234 @@ function loadFromSession() {
         });
     }
 }
+
+// Req 7: Save only the Date Covered column
+window.saveDateCoveredOnly = async function() {
+    try {
+        const scheduleRows = document.querySelectorAll('#schedule-editor-body tr');
+        const dates = Array.from(scheduleRows)
+            .filter(r => r.style.display !== 'none')
+            .map(row => {
+                const cells = row.querySelectorAll('.editable-cell');
+                return cells[11] ? cells[11].innerHTML.trim() : "";
+            });
+
+        const fetchResponse = await fetch('/syllabus/schedule/update-date-covered', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                syllabusID: window.CURRENT_SYLLABUS_ID,
+                dates: dates
+            })
+        });
+
+        const resData = await fetchResponse.json();
+        if (!fetchResponse.ok || !resData.success) {
+            throw new Error(resData.error || 'Server rejected the request.');
+        }
+
+        alert('Date Covered updated successfully!');
+        window.location.href = '/syllabus';
+    } catch (e) {
+        console.error("Submit Error:", e);
+        alert('Failed to save Date Covered. Check console for details.');
+    }
+};
+
+// ==========================================
+// RUN ON LOAD: Load Data into the HTML DOM!
+// ==========================================
+window.addEventListener('load', () => {
+    const key = `syllabus_draft_schedule_${window.CURRENT_SYLLABUS_ID || 'default'}`;
+    const savedSessionData = sessionStorage.getItem(key);
+    const hasServerData = window.SERVER_SYLLABUS_DATA && 
+                          ( (window.SERVER_SYLLABUS_DATA.schedules && window.SERVER_SYLLABUS_DATA.schedules.length > 0) || 
+                            (window.SERVER_SYLLABUS_DATA.evaluation && window.SERVER_SYLLABUS_DATA.evaluation.length > 0) );
+
+    if (hasServerData && !savedSessionData) {
+        loadFromServer();
+        if (result.success) {
+            const draftKey = `syllabusFormDraft_${window.CURRENT_SYLLABUS_ID || 'default'}`;
+            const scheduleKey = `syllabus_draft_schedule_${window.CURRENT_SYLLABUS_ID || 'default'}`;
+            const infoKey = `syllabus_draft_info_${window.CURRENT_SYLLABUS_ID || 'default'}`;
+            
+            // Removed sessionStorage.removeItem so that if the user clicks BACK, 
+            // the data is preserved and they won't encounter a "Missing data" error.
+            // sessionStorage.removeItem(draftKey);
+            // sessionStorage.removeItem(scheduleKey);
+            // sessionStorage.removeItem(infoKey);
+            
+            if (payload.actionType === 'draft') {
+                alert('Syllabus saved as a draft.');
+            } else if (payload.actionType === 'submit') {
+                alert('Syllabus saved. Awaiting Faculty Signature.');
+            } else {
+                alert('Syllabus successfully compiled and submitted for review!');
+            }
+
+            // Role-based redirection
+            if (payload.actionType === 'submit') {
+                window.location.href = `/faculty/submit/${window.CURRENT_SYLLABUS_ID}`;
+                return;
+            }
+
+            const role = (window.USER_ROLE || '').toLowerCase();
+            if (role === 'dean') {
+                window.location.href = `/syllabus/${window.USER_ID}`;
+            } else if (role === 'professor' || role === 'faculty') {
+                window.location.href = '/faculty';
+            } else if (role === 'program-chair' || role === 'program chair') {
+                window.location.href = '/syllabus/prog-chair';
+            } else {
+                window.location.href = '/syllabus';
+            }
+        } else {
+            alert('Error saving syllabus: ' + (result.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error("Submission backend call failed:", error);
+        alert("An error occurred communicating with the server. Check console for details.");
+    }
+}
+
+function loadFromServer() {
+    if (!window.SERVER_SYLLABUS_DATA) return;
+    const { schedules, evaluation, assessment } = window.SERVER_SYLLABUS_DATA;
+
+    // Restore Weekly Schedule
+    const scheduleBody = document.getElementById('schedule-editor-body');
+    if (scheduleBody && schedules && schedules.length > 0) {
+        scheduleBody.innerHTML = '';
+        schedules.forEach(item => {
+            addScheduleRow();
+            const lastRow = scheduleBody.lastElementChild;
+            const cells = lastRow.querySelectorAll('.editable-cell');
+            if (cells.length >= 12) {
+                setCellData(cells[0], item.week || "");
+                setCellData(cells[1], item.outcomeCo || "");
+                setCellData(cells[2], item.outcomeMo || "");
+                setCellData(cells[3], item.outcomeIlo || "");
+                setCellData(cells[4], item.coverageDay || "");
+                setCellData(cells[5], item.coverageTopic || "");
+                setCellData(cells[6], item.tlaMode || "");
+                setCellData(cells[7], item.tlaActivities || "");
+                setCellData(cells[8], item.assessmentTaskMode || "");
+                setCellData(cells[9], item.assessmentTaskTask || "");
+                setCellData(cells[10], item.referenceNum || "");
+                setCellData(cells[11], item.dateCovered || "");
+            }
+        });
+    }
+
+    // Restore Course Evaluation
+    const evalBody = document.getElementById('evaluation-editor-body');
+    if (evalBody && evaluation && evaluation.length > 0) {
+        evalBody.innerHTML = '';
+        evaluation.forEach(item => {
+            addEvaluationRow();
+            const lastRow = evalBody.lastElementChild;
+            const cells = lastRow.querySelectorAll('.editable-cell');
+            if (cells.length >= 7) {
+                setCellData(cells[0], item.moduleCode || "");
+                setCellData(cells[1], item.coNumber || "");
+                setCellData(cells[2], item.mediatingOutcome || "");
+                setCellData(cells[3], item.onlineTaskWeight || "0");
+                setCellData(cells[4], item.longExaminationWeight || "0");
+                setCellData(cells[5], item.moduleWeight || "0");
+                setCellData(cells[6], item.finalWeight || "0");
+            }
+        });
+    }
+
+    // Restore Course Outcomes Assessment Tasks
+    const assessmentBody = document.getElementById('assessment-editor-body');
+    if (assessmentBody && assessment && assessment.length > 0) {
+        assessmentBody.innerHTML = '';
+        assessment.forEach(item => {
+            addAssessmentRow();
+            const lastRow = assessmentBody.lastElementChild;
+            const cells = lastRow.querySelectorAll('.editable-cell');
+            if (cells.length >= 3) {
+                setCellData(cells[0], item.coNumber || "");
+                setCellData(cells[1], item.assessmentTasks || "");
+                setCellData(cells[2], item.minSatisfactoryPerf || "0");
+            }
+        });
+    }
+}
+
+function loadFromSession() {
+    const key = `syllabus_draft_schedule_${window.CURRENT_SYLLABUS_ID || 'default'}`;
+    const savedData = sessionStorage.getItem(key);
+    if (!savedData) return;
+    const data = JSON.parse(savedData);
+
+    const scheduleBody = document.getElementById('schedule-editor-body');
+    if (scheduleBody && data.schedule) {
+        scheduleBody.innerHTML = '';
+        data.schedule.forEach(rowCells => {
+            addScheduleRow();
+            const lastRow = scheduleBody.lastElementChild;
+            const targetCells = lastRow.querySelectorAll('.editable-cell');
+            rowCells.forEach((html, i) => { if (targetCells[i]) setCellData(targetCells[i], html, true); });
+        });
+    }
+
+    const evalBody = document.getElementById('evaluation-editor-body');
+    if (evalBody && data.evaluation) {
+        evalBody.innerHTML = '';
+        data.evaluation.forEach(rowCells => {
+            addEvaluationRow();
+            const lastRow = evalBody.lastElementChild;
+            const targetCells = lastRow.querySelectorAll('.editable-cell');
+            rowCells.forEach((html, i) => { if (targetCells[i]) setCellData(targetCells[i], html, true); });
+        });
+    }
+
+    const assessmentBody = document.getElementById('assessment-editor-body');
+    if (assessmentBody && data.assessment) {
+        assessmentBody.innerHTML = '';
+        data.assessment.forEach(rowCells => {
+            addAssessmentRow();
+            const lastRow = assessmentBody.lastElementChild;
+            const targetCells = lastRow.querySelectorAll('.editable-cell');
+            rowCells.forEach((html, i) => { if (targetCells[i]) setCellData(targetCells[i], html, true); });
+        });
+    }
+}
+
+// Req 7: Save only the Date Covered column
+window.saveDateCoveredOnly = async function() {
+    try {
+        const scheduleRows = document.querySelectorAll('#schedule-editor-body tr');
+        const dates = Array.from(scheduleRows)
+            .filter(r => r.style.display !== 'none')
+            .map(row => {
+                const cells = row.querySelectorAll('.editable-cell');
+                return cells[11] ? cells[11].innerHTML.trim() : "";
+            });
+
+        const fetchResponse = await fetch('/syllabus/schedule/update-date-covered', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                syllabusID: window.CURRENT_SYLLABUS_ID,
+                dates: dates
+            })
+        });
+
+        const resData = await fetchResponse.json();
+        if (!fetchResponse.ok || !resData.success) {
+            throw new Error(resData.error || 'Server rejected the request.');
+        }
+
+        alert('Date Covered updated successfully!');
+        window.location.href = '/syllabus';
+    } catch (e) {
+        console.error("Submit Error:", e);
+        alert('Failed to save Date Covered. Check console for details.');
+    }
+};
 
 // ==========================================
 // RUN ON LOAD: Load Data into the HTML DOM!

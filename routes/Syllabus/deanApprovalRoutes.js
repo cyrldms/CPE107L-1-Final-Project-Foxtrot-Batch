@@ -39,7 +39,7 @@ deanApprovalRouter.get('/:syllabusId', async (req, res) => {
                 fileType: 'Syllabus Draft',
                 syllabusId,
                 currentPageCategory: 'syllabus',
-                approvalStatus: approval ? approval.status : 'Pending',
+                approvalStatus: approval ? approval.status : 'Pending Endorsement',
                 existingComment: approval ? (approval.Dean_Remarks || '') : '',
                 pcRemarks: approval ? (approval.PC_Remarks || (approval.remarks && approval.remarks !== 'Awaiting Faculty Signature' ? approval.remarks : '')) : '',
                 workflowStep: 'approval',

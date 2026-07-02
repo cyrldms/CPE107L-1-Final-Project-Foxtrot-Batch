@@ -456,7 +456,7 @@
     font-family: inherit;
 }
 
-.ad-sig-tab + .ad-sig-tab {
+.ad-sig-tab+.ad-sig-tab {
     border-left: 1px solid #ccc;
 }
 
@@ -613,7 +613,7 @@
     max-height: 75vh;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     color: #333;
 }
 
@@ -696,7 +696,6 @@
 
 .ad-signature-name {
     font-weight: bold;
-    text-decoration: underline;
     text-transform: uppercase;
     margin: 0;
     font-size: 1rem;
@@ -732,34 +731,35 @@
         margin: 0;
     }
 
-    body, .approval-detail-main {
+    body,
+    .approval-detail-main {
         background: none !important;
         background-color: white !important;
         height: auto !important;
         margin: 0 !important;
         padding: 0 !important;
     }
-    
-    .approval-detail-header, 
-    .ad-back-btn, 
-    .ad-sidebar, 
-    .ad-tracker, 
-    .ad-file-type-badge, 
+
+    .approval-detail-header,
+    .ad-back-btn,
+    .ad-sidebar,
+    .ad-tracker,
+    .ad-file-type-badge,
     .ad-section-title {
         display: none !important;
     }
-    
+
     .approval-detail-body {
         padding: 0 !important;
         margin: 0 !important;
         display: block !important;
     }
-    
+
     .ad-document-panel {
         width: 100% !important;
         max-width: none !important;
     }
-    
+
     .ad-document-preview {
         max-height: none !important;
         overflow-y: visible !important;
@@ -768,7 +768,7 @@
         padding: 0 !important;
         margin: 0 !important;
     }
-    
+
     /* Make document content full width for print */
     .ad-doc-content {
         max-height: none !important;
@@ -776,16 +776,20 @@
         border: none !important;
         padding: 2cm 1.5cm !important;
     }
-    
+
     /* Display signature block on PDF */
     .ad-signature-block {
         display: block !important;
     }
-    
+
     /* Make sure page breaks inside tables are avoided */
-    table, tr, td, th {
+    table,
+    tr,
+    td,
+    th {
         page-break-inside: avoid;
     }
+
     h3 {
         page-break-after: avoid;
     }

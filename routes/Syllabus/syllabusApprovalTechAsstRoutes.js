@@ -13,7 +13,7 @@ const DUMMY_DRAFTS = [
         courseTitle: 'Software Design',
         instructor: 'Juan dela Cruz',
         img: 'https://picsum.photos/seed/cpe101/400/200',
-        status: 'Pending',
+        status: 'Pending Endorsement',
         approvalDate: null,
         approvedBy: null,
         remarks: 'Awaiting TA review.',
@@ -37,7 +37,7 @@ const DUMMY_DRAFTS = [
         courseTitle: 'Digital Electronics: Logic Circuits and Design',
         instructor: 'Jose Reyes',
         img: 'https://picsum.photos/seed/cpe101l/400/200',
-        status: 'Pending',
+        status: 'Pending Endorsement',
         approvalDate: null,
         approvedBy: null,
         remarks: null,
@@ -88,7 +88,7 @@ syllabusApprovalTechAsstRouter.get('/', async (req, res) => {
 
         if (drafts.length === 0) drafts = DUMMY_DRAFTS;
 
-        const pendingCount = drafts.filter(d => d.status === 'Pending').length;
+        const pendingCount = drafts.filter(d => d.status === 'Pending Endorsement').length;
         const approvedCount = drafts.filter(d => d.status === 'Approved').length;
 
         res.render('Syllabus/syllabusApprovalTechAsst', { drafts, pendingCount, approvedCount, returnUrl, currentPageCategory: 'syllabus' });

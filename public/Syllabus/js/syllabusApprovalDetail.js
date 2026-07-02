@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const payload = {
                 syllabusId,
                 comment: document.getElementById('approval-comments')?.value || '',
-                status: statusSelect?.value || 'Pending',
+                status: statusSelect?.value || 'Pending Endorsement',
                 action: 'draft',
                 sectionComments: window.currentSectionComments || []
             };
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const status = statusSelect?.value || 'Pending';
+            const status = statusSelect?.value || 'Pending Endorsement';
             const comment = document.getElementById('approval-comments')?.value || '';
             const actionLabel = SYLLABUS_APPROVAL_DATA.actionLabel || 'submission';
             const signatoryName = document.getElementById('signatory-name-input')?.value || '';
@@ -414,7 +414,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (!confirm(`Are you sure you want to submit this ${actionLabel} as "${status}"?`)) return;
+            let confirmMsg = `Are you sure you want to submit this ${actionLabel} as "${status}"?`;
+            if (typeof SYLLABUS_APPROVAL_DATA !== 'undefined' && SYLLABUS_APPROVAL_DATA.workflowStep === 'faculty_submission') {
+                confirmMsg = 'Submit this Syllabus to Program Chair?';
+            }
+
+            if (!confirm(confirmMsg)) return;
 
             if (typeof window.flushSectionComments === 'function') {
                 window.flushSectionComments();

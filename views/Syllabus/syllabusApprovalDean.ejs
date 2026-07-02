@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Approve Syllabus â€” Dean</title>
+    <title>Approve Syllabus</title>
     <link rel="icon" type="image/x-icon" href="/common/img/chalkboardLogo.ico">
 
     <!-- School palette variables -->
@@ -71,7 +71,8 @@
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Pre-requisite</td><td><%= locals.syl && locals.syl.preRequisite ? locals.syl.preRequisite : 'None' %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Co-requisite</td><td><%= locals.syl && locals.syl.coRequisite ? locals.syl.coRequisite : 'None' %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Credit Units</td><td><%= locals.syl && locals.syl.units ? locals.syl.units : 'N/A' %></td></tr>
-                        <tr><td style="font-weight:bold; background:#f9f9f9;">Lecture Hours/Week</td><td><%= locals.syl && locals.syl.classSchedule ? locals.syl.classSchedule : '0' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Lecture Hours/Week</td><td><%= (locals.syl && locals.syl.lectureHours && locals.syl.lectureHours !== '0') ? locals.syl.lectureHours : '-' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Laboratory Hours/Week</td><td><%= (locals.syl && locals.syl.labHours && locals.syl.labHours !== '0') ? locals.syl.labHours : '-' %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Course Design</td><td><%= locals.syl && locals.syl.courseDesign ? locals.syl.courseDesign : 'Not set' %></td></tr>
                     </table>
 
@@ -248,14 +249,14 @@
                     <h3 class="ad-section-heading" data-section-key="evaluation">Course Evaluation</h3>
                     <% if (locals.evaluations && locals.evaluations.length > 0) { %>
                         <p style="font-size:0.85rem; color:#555; margin-bottom:10px;">The final grade of the student is based on the following components:</p>
-                        <table class="ad-data-table" style="font-size: 0.85rem; text-align:center;">
+                        <table class="ad-data-table" style="font-size: 0.85rem; text-align:center; margin-bottom: 8px;">
                             <thead>
                                 <tr>
                                     <th>Module Code</th>
                                     <th>CO</th>
                                     <th style="text-align:left;">Mediating Outcomes</th>
-                                    <th>LT %</th>
-                                    <th>PE %</th>
+                                    <th>FA %</th>
+                                    <th>SA %</th>
                                     <th>Modular Weight %</th>
                                     <th>Final Weight %</th>
                                 </tr>
@@ -274,7 +275,7 @@
                                 <% }); %>
                             </tbody>
                         </table>
-                        <p style="font-size: 0.75rem; font-style: italic; margin-top: 5px;">*OT – Online Tasks/Quiz/Lab; LE – Long Examination; FP – Final Project</p>
+                        <p style="font-size: 0.75rem; font-style: italic; margin-top: 8px; margin-bottom: 2.5rem;">*OT – Online Tasks/Quiz/Lab; LE – Long Examination; FP – Final Project</p>
                     <% } else { %>
                         <p class="ad-no-content">No course evaluation provided.</p>
                     <% } %>
@@ -305,14 +306,10 @@
                     </div>
 
                     <h3 class="ad-section-heading" data-section-key="textbook">Textbook</h3>
-                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333;">
-                        <%= locals.syl && locals.syl.textbook ? locals.syl.textbook : 'No textbook specified.' %>
-                    </div>
+                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333; white-space: pre-wrap;"><%= locals.syl && locals.syl.textbook ? locals.syl.textbook : 'No textbook specified.' %></div>
 
                     <h3 class="ad-section-heading" data-section-key="references">References</h3>
-                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333; white-space: pre-wrap;">
-                        <%= locals.syl && locals.syl.references ? locals.syl.references : 'No references specified.' %>
-                    </div>
+                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333; white-space: pre-wrap;"><%= locals.syl && locals.syl.references ? locals.syl.references : 'No references specified.' %></div>
                     <h3 class="ad-section-heading" data-section-key="assessment">Course Outcomes Assessment</h3>
                     <% if (locals.cos && locals.cos.length > 0) { %>
                         <p style="font-size:0.85rem; color:#555; margin-bottom:10px;">Achievement of course outcomes is based on the following:</p>
@@ -393,6 +390,7 @@
                                 <p style="font-weight:600; font-size:0.85rem; color:#666; margin-bottom:8px;">Approved by:</p>
                                 <div id="preview-signature-img-container" style="margin-bottom:6px; height:60px; max-width:150px; margin:0 auto;">
                                     <!-- Dean signature image will be placed here by JS -->
+                                    <div style="height:60px; border-bottom:1px solid #999; width:150px; margin:0 auto 6px;"></div>
                                 </div>
                                 <p id="preview-signatory-name" style="font-weight:700; font-size:0.9rem; margin:4px 0 2px;">DEAN</p>
                                 <p style="font-size:0.8rem; color:#888;">Dean</p>
@@ -412,7 +410,7 @@
                 <div class="ad-tracker">
                     <% const steps=[ { role: 'Faculty' , label: 'Submitted' , status: 'approved' }, { role: 'Program Chair' , label: 'Endorsed' ,
                         status: 'approved' }, { role: 'Dean' , label: 'On-Going' , status: 'ongoing' }, { role: 'HR' ,
-                        label: 'Pending' , status: 'pending' } ]; %>
+                        label: 'Pending Endorsement' , status: 'pending' } ]; %>
 
                         <div class="ad-tracker-steps">
                             <% steps.forEach(function(step, idx) { %>

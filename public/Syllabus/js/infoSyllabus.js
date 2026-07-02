@@ -14,7 +14,8 @@ function autoSaveInfo() {
         preRequisite: getGridText(1, 0),
         coRequisite: getGridText(1, 1),
         creditUnits: getGridText(1, 2),
-        classSchedule: (parseInt(getGridText(2, 0)) || 0) + (parseInt(getGridText(2, 1)) || 0),
+        lectureHours: parseFloat(getGridText(2, 0)) || 0,
+        labHours: parseFloat(getGridText(2, 1)) || 0,
         courseDesign: getGridText(3, 0),
 
         // Text Areas
@@ -52,7 +53,7 @@ function autoSaveInfo() {
 
 function handleInfoBack() {
     autoSaveInfo();
-    setTimeout(() => { window.history.back(); }, 100);
+    setTimeout(() => { window.location.href = '/syllabus/create/' + (window.CURRENT_SYLLABUS_ID || 'default'); }, 100);
 }
 
 function handleInfoNext() {
@@ -143,8 +144,8 @@ function loadInfoFromSession() {
     setGridText(1, 0, data.preRequisite);
     setGridText(1, 1, data.coRequisite);
     setGridText(1, 2, data.creditUnits);
-    setGridText(2, 0, data.classSchedule || 0);
-    setGridText(2, 1, 0);
+    setGridText(2, 0, data.lectureHours || 0);
+    setGridText(2, 1, data.labHours || 0);
     setGridText(3, 0, data.courseDesign);
     
     const desc = document.querySelector('.multiline[data-placeholder*="course description"]');
@@ -270,9 +271,9 @@ function loadInfoFromServer() {
         };
         setGridText(1, 0, syl.preRequisite);
         setGridText(1, 1, syl.coRequisite);
-        setGridText(1, 2, syl.creditUnits);
-        setGridText(2, 0, syl.classSchedule || 0);
-        setGridText(2, 1, 0);
+        setGridText(1, 2, syl.units);
+        setGridText(2, 0, syl.lectureHours || 0);
+        setGridText(2, 1, syl.labHours || 0);
         setGridText(3, 0, syl.courseDesign);
 
         const desc = document.querySelector('.multiline[data-placeholder*="course description"]');
@@ -1125,7 +1126,8 @@ window.saveInfoToSession = function() {
             preRequisite: getGridText(1, 0),
             coRequisite: getGridText(1, 1),
             units: getGridText(1, 2),
-            classSchedule: (parseInt(getGridText(2, 0)) || 0) + (parseInt(getGridText(2, 1)) || 0),
+            lectureHours: parseFloat(getGridText(2, 0)) || 0,
+            labHours: parseFloat(getGridText(2, 1)) || 0,
             courseDesign: getGridText(3, 0),
             courseDescription: document.querySelector('.multiline[data-placeholder*="course description"]')?.innerText.trim() || '',
             textbook: document.querySelector('.multiline[data-placeholder*="textbook"]')?.innerText.trim() || '',

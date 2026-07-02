@@ -118,8 +118,8 @@ function handleBackAction() {
         alert("Progress saved to session!");
     }
     
-    // 2. Proceed with going back
-    window.history.back();
+    // 2. Proceed with going back to dashboard
+    window.location.href = '/syllabus';
 }
 
 function saveToSession() {
@@ -351,7 +351,32 @@ window.saveNewToSession = function() {
         // Pass the Syllabus ID payload context along natively
         payload.syllabusId = window.CURRENT_SYLLABUS_ID;
 
-        // Save to session
+        if (window.IS_GLOBAL_TEMPLATE) {
+            // Save directly to backend via API and return to HR dashboard
+            fetch('/syllabus/create/api/global-template', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Global Template updated successfully!');
+                    window.location.href = '/syllabus/hr';
+                } else {
+                    alert('Failed to update global template.');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error updating global template.');
+            });
+            return;
+        }
+
+        // Save to session for standard syllabus workflow
         const saveKey = `syllabusFormDraft_${window.CURRENT_SYLLABUS_ID || 'default'}`;
         sessionStorage.setItem(saveKey, JSON.stringify(payload));
         

@@ -51,7 +51,7 @@ const DUMMY_COURSES = [
         instructor: 'Maria Santos',
         img: 'https://picsum.photos/seed/ee101/400/200',
         hasDraft: true,
-        status: 'Pending'
+        status: 'Pending Endorsement'
     }
 ];
 
@@ -111,7 +111,7 @@ const DUMMY_DRAFTS = [
    ----------------------------------------------------------------------- */
 endorseSyllabusRouter.get('/', async (req, res) => {
     try {
-        let userCourses = await Syllabus.find({});
+        let userCourses = await Syllabus.find({ courseCode: { $ne: '__GLOBAL_TEMPLATE__' } });
 
         if (mainDB.models.User) {
             await Syllabus.populate(userCourses, { path: 'assignedInstructor' });
@@ -220,7 +220,7 @@ endorseSyllabusRouter.get('/approve', async (req, res) => {
             $or: [
                 { status: 'Pending Faculty Signature' },
                 { status: 'Signed by Faculty' },
-                { status: 'Pending' },
+                { status: 'Pending Endorsement' },
                 { status: 'Approved', approvedBy: 'PC_Approved' },
                 { status: 'Approved', approvedBy: 'Program Chair' },
                 { status: 'Endorsed' },
@@ -243,7 +243,7 @@ endorseSyllabusRouter.get('/approve', async (req, res) => {
                 if (!syl) return null;
                 
                 // Map status for frontend filter (Pending, PC_Approved, or Rejected)
-                let displayStatus = approval.status === 'Pending Faculty Signature' || approval.status === 'Signed by Faculty' ? approval.status : 'Pending';
+                let displayStatus = approval.status === 'Pending Faculty Signature' || approval.status === 'Signed by Faculty' ? approval.status : 'Pending Endorsement';
                 let statusDateLabel = 'Submitted';
 
                 if (approval.approvedBy === 'Rejected') {
@@ -281,11 +281,11 @@ endorseSyllabusRouter.get('/approve', async (req, res) => {
 
 
 
-        const pendingCount = drafts.filter(d => d.status === 'Pending').length;
+        const pendingCount = drafts.filter(d => d.status === 'Pending Endorsement').length;
         const approvedHistoryCount = drafts.filter(d => d.status === 'PC_Approved').length;
         const rejectedCount = drafts.filter(d => d.status === 'Rejected').length;
 
-        const statusOrder = { 'Pending': 1, 'PC_Approved': 2, 'Endorsed': 2, 'Rejected': 3 };
+        const statusOrder = { 'Pending Endorsement': 1, 'PC_Approved': 2, 'Endorsed': 2, 'Rejected': 3 };
         drafts.sort((a, b) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99));
 
         res.render('Syllabus/syllabusEndorsementQueue', {
@@ -332,7 +332,7 @@ endorseSyllabusRouter.get('/approve/:syllabusId', async (req, res) => {
                     academicYear: '2025-2026',
                     fileType: 'Syllabus Draft (DEMO)',
                     syllabusId: syllabusId,
-                    currentStatus: 'Pending',
+                    currentStatus: 'Pending Endorsement',
                     approvalState: dummy.status === 'PC_Approved' ? 'PC_Approved' : null,
                     existingComment: dummy.remarks || '',
                     currentPageCategory: 'syllabus',
@@ -370,7 +370,7 @@ endorseSyllabusRouter.get('/approve/:syllabusId', async (req, res) => {
                 academicYear: syl.academicYear || 'Academic Year',
                 fileType: 'Syllabus Draft',
                 syllabusId: syllabusId, // Consistent naming
-                currentStatus: approval ? approval.status : 'Pending',
+                currentStatus: approval ? approval.status : 'Pending Endorsement',
                 approvalState: approval ? approval.approvedBy : null,
                 existingComment: approval ? (approval.PC_Remarks || approval.remarks || '') : '',
                 sectionComments: approval ? (approval.sectionComments || []) : [],
@@ -500,7 +500,7 @@ endorseSyllabusRouter.get('/endorse', async (req, res) => {
 
                 // Map status for frontend filter (Pending or Endorsed)
                 const isEndorsed = (approval.status === 'Endorsed' || approval.status === 'Endorsed to Dean');
-                const displayStatus = isEndorsed ? 'Endorsed' : 'Pending';
+                const displayStatus = isEndorsed ? 'Endorsed' : 'Pending Endorsement';
 
                 return {
                     syllabusId: syl._id.toString(),
@@ -528,12 +528,12 @@ endorseSyllabusRouter.get('/endorse', async (req, res) => {
 
 
 
-        const pendingCount = drafts.filter(d => d.status === 'Pending').length;
+        const pendingCount = drafts.filter(d => d.status === 'Pending Endorsement').length;
         const endorsedHistoryCount = drafts.filter(d => d.status === 'Endorsed').length;
 
         console.log(`✅ ENDORSE QUEUE RENDER - drafts: ${drafts.length}, pending: ${pendingCount}, endorsed: ${endorsedHistoryCount}`);
 
-        const statusOrder = { 'Pending': 1, 'Endorsed': 2, 'PC_Approved': 2, 'Rejected': 3 };
+        const statusOrder = { 'Pending Endorsement': 1, 'Endorsed': 2, 'PC_Approved': 2, 'Rejected': 3 };
         drafts.sort((a, b) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99));
 
         res.render('Syllabus/syllabusEndorsementQueue', {
@@ -576,7 +576,7 @@ endorseSyllabusRouter.get('/endorse/:syllabusId', async (req, res) => {
                     academicYear: '2025-2026',
                     fileType: 'Syllabus Draft (DEMO)',
                     syllabusId,
-                    currentStatus: dummy.status === 'Endorsed' ? 'Approved' : 'Pending',
+                    currentStatus: dummy.status === 'Endorsed' ? 'Approved' : 'Pending Endorsement',
                     approvalState: dummy.status === 'Endorsed' ? 'Program Chair' : 'PC_Approved',
                     existingComment: dummy.remarks || '',
                     currentPageCategory: 'syllabus',
@@ -613,7 +613,7 @@ endorseSyllabusRouter.get('/endorse/:syllabusId', async (req, res) => {
                 academicYear: syl.academicYear || 'Academic Year',
                 fileType: 'Syllabus Draft',
                 syllabusId: syllabusId, // Consistent naming
-                currentStatus: approval ? approval.status : 'Pending',
+                currentStatus: approval ? approval.status : 'Pending Endorsement',
                 approvalState: approval ? approval.approvedBy : null,
                 existingComment: approval ? (approval.PC_Remarks || approval.remarks || '') : '',
                 currentPageCategory: 'syllabus',
