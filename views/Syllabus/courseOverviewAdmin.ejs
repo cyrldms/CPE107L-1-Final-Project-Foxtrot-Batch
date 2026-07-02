@@ -34,13 +34,13 @@
                                     <div class="stat-pill approved">
                                         <i class="fas fa-check-circle"></i>
                                         <span>
-                                            <%= approvedCount %> Approved by Dean
+                                            <%= approvedCount %> Approved
                                         </span>
                                     </div>
                                     <div class="stat-pill archived">
                                         <i class="fas fa-archive"></i>
                                         <span>
-                                            <%= archivedCount %> Verified by HR
+                                            <%= archivedCount %> Archived
                                         </span>
                                     </div>
                                     <div class="stat-pill" style="background: rgba(217, 48, 37, 0.1); color: #d93025;">
@@ -65,8 +65,8 @@
                         <!-- Filter Tabs -->
                         <div class="filter-tabs">
                             <button class="tab-btn active" data-filter="all">All</button>
-                            <button class="tab-btn" data-filter="Approved">Approved by Dean</button>
-                            <button class="tab-btn" data-filter="Archived">Verified by HR</button>
+                            <button class="tab-btn" data-filter="Approved">Approved</button>
+                            <button class="tab-btn" data-filter="Archived">Archived</button>
                             <button class="tab-btn" data-filter="Returned">Returned</button>
                         </div>
 
@@ -110,7 +110,7 @@
                                                             <%= d.instructor %>
                                                         </span>
                                                         <% if (d.approvalDate) { %>
-                                                            <span><i class="fas fa-check"></i> Approved by Dean: <%=
+                                                            <span><i class="fas fa-check"></i> Approved: <%=
                                                                     d.approvalDate %></span>
                                                             <% } %>
                                                                 <% if (d.approvedBy) { %>
@@ -120,7 +120,7 @@
                                                                         <% if (d.status==='Archived' && d.archivedDate)
                                                                             { %>
                                                                             <span><i class="fas fa-archive"></i>
-                                                                                Verified by HR: <%= d.archivedDate %>
+                                                                                Archived: <%= d.archivedDate %>
                                                                                     </span>
                                                                             <% } %>
                                                                                 <% if (d.status==='Archived' &&
@@ -140,7 +140,7 @@
                                                 <div class="item-actions">
                                                     <% if (d.status==='Approved' ) { %>
                                                         <span class="status-badge status-approved">
-                                                            <i class="fas fa-check-circle"></i> Approved by Dean
+                                                            <i class="fas fa-check-circle"></i> Approved
                                                         </span>
                                                         <button class="review-btn"
                                                             onclick="window.location.href='/syllabus/hr/review/<%= d.syllabusId %>'"
@@ -150,7 +150,7 @@
                                                         </button>
                                                         <% } else if (d.status==='Archived' ) { %>
                                                             <span class="status-badge status-archived">
-                                                                <i class="fas fa-box"></i> Verified by HR
+                                                                <i class="fas fa-box"></i> Archived
                                                             </span>
                                                             <button class="review-btn"
                                                                 onclick="window.location.href='/syllabus/hr/review/<%= d.syllabusId %>'"

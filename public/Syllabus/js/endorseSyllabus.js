@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearFormError();
             modal.style.display = 'flex';
             fetchInstructors();
+            fetchCoursesList();
         };
     }
 
@@ -136,6 +137,53 @@ document.addEventListener('DOMContentLoaded', () => {
     const formErrorText = document.getElementById('formErrorText');
     const courseTitleInput = document.getElementById('courseTitle');
     const courseCodeInput = document.getElementById('courseCode');
+    const courseHint = document.getElementById('courseHint');
+
+    // =========================================
+    // Fetch Courses List (Req 1)
+    // =========================================
+    let coursesData = [];
+    async function fetchCoursesList() {
+        if (!courseCodeInput || !courseHint) return;
+        courseHint.textContent = 'Loading courses from database...';
+        courseHint.className = 'form-hint';
+
+        try {
+            const response = await fetch('/syllabus/prog-chair/api/courses?t=' + new Date().getTime());
+            coursesData = await response.json();
+            courseCodeInput.innerHTML = '<option value="">— Select a Course —</option>';
+
+            if (coursesData.length > 0) {
+                coursesData.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.courseCode;
+                    option.textContent = course.courseCode;
+                    courseCodeInput.appendChild(option);
+                });
+                courseHint.textContent = `${coursesData.length} course(s) available`;
+                courseHint.className = 'form-hint loaded';
+            } else {
+                courseHint.textContent = 'No courses found in database.';
+                courseHint.className = 'form-hint error';
+            }
+        } catch (error) {
+            console.error('Error fetching courses:', error);
+            courseHint.textContent = 'Could not load courses.';
+            courseHint.className = 'form-hint error';
+        }
+    }
+
+    if (courseCodeInput) {
+        courseCodeInput.addEventListener('change', (e) => {
+            const selectedCourse = coursesData.find(c => c.courseCode === e.target.value);
+            if (selectedCourse && courseTitleInput) {
+                courseTitleInput.value = selectedCourse.courseTitle;
+            } else if (courseTitleInput) {
+                courseTitleInput.value = '';
+            }
+        });
+    }
+
 
     if (addCourseForm) {
         addCourseForm.addEventListener('submit', async (e) => {
@@ -281,6 +329,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function attachCardClickHandlers() {
         document.querySelectorAll('.course-card').forEach(card => {
+            const courseId = card.dataset.id;
+            
+            // Check local storage for drafts
+            const hasLocalInfo = sessionStorage.getItem(`syllabus_draft_info_${courseId}`);
+            const hasLocalSchedule = sessionStorage.getItem(`syllabus_draft_schedule_${courseId}`);
+            let hasLocalDraft = false;
+            if (hasLocalInfo) {
+                try {
+                    const data = JSON.parse(hasLocalInfo);
+                    const isTouched = (
+                        data.courseDescription || data.textbook || data.references || data.preRequisite || data.coRequisite || data.creditUnits || 
+                        (data.lectureHours && parseFloat(data.lectureHours) > 0) || (data.labHours && parseFloat(data.labHours) > 0) || data.courseDesign || 
+                        (data.outcomesGrid && data.outcomesGrid.some(o => o.statement && o.statement.trim() !== '')) || 
+                        (data.mappingValues && data.mappingValues.some(r => r.some(v => v && v !== 'none'))) || 
+                        (data.conceptMap && data.conceptMap !== '' && !data.conceptMap.endsWith('undefined'))
+                    );
+                    if (isTouched) hasLocalDraft = true;
+                } catch(e) {}
+            }
+            if (hasLocalSchedule) hasLocalDraft = true;
+
+            let status = card.dataset.status || 'No Syllabus Draft';
+            let hasDraft = card.dataset.hasdraft === 'true';
+
+            if (hasLocalDraft && (!hasDraft || status === 'No Syllabus Draft')) {
+                status = 'Draft';
+                hasDraft = true;
+                card.dataset.status = status;
+                card.dataset.hasdraft = 'true';
+                
+                // Update DOM text
+                const statusEl = card.querySelector('.course-status');
+                if (statusEl) {
+                    statusEl.className = 'course-status status-pending';
+                    statusEl.innerText = 'Saved as Draft';
+                }
+            }
+
             card.removeEventListener('click', handleCardClick);
             card.addEventListener('click', handleCardClick);
         });
@@ -377,12 +463,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getStatusInfo(status) {
         switch(status) {
-            case 'Pending Endorsement':
-            case 'Pending': return { cssClass: 'status-pending', label: 'Pending Endorsement' };
+            case 'Pending Endorsement': 
+            case 'Signed by Faculty':
+            case 'Pending': return { cssClass: 'status-pending', label: 'Pending' };
             case 'Endorsed': 
-            case 'Endorsed to Dean': return { cssClass: 'status-endorsed', label: 'Endorsed to Dean' };
-            case 'Approved': return { cssClass: 'status-approved', label: 'Approved by Dean' };
-            case 'Archived': return { cssClass: 'status-archived', label: 'Verified by HR' };
+            case 'Endorsed to Dean': return { cssClass: 'status-endorsed', label: 'Endorsed' };
+            case 'Approved': return { cssClass: 'status-approved', label: 'Approved' };
+            case 'Archived': return { cssClass: 'status-archived', label: 'Archived' };
             case 'Rejected': case 'Returned': return { cssClass: 'status-rejected', label: status };
             case 'Returned to PC': return { cssClass: 'status-returned', label: 'Returned to PC' };
             default: return { cssClass: 'status-no-draft', label: status || 'No Syllabus Draft' };
@@ -393,6 +480,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!courseGrid) return;
         const wasDeleteMode = isDeleteMode;
         const wasListView = courseGrid.classList.contains('list-view');
+
+        courses.forEach(course => {
+            const hasLocalInfo = sessionStorage.getItem(`syllabus_draft_info_${course.id}`);
+            const hasLocalSchedule = sessionStorage.getItem(`syllabus_draft_schedule_${course.id}`);
+            let hasLocalDraft = false;
+            if (hasLocalInfo) {
+                try {
+                    const data = JSON.parse(hasLocalInfo);
+                    const isTouched = (
+                        data.courseDescription || data.textbook || data.references || data.preRequisite || data.coRequisite || data.creditUnits || 
+                        (data.lectureHours && parseFloat(data.lectureHours) > 0) || (data.labHours && parseFloat(data.labHours) > 0) || data.courseDesign || 
+                        (data.outcomesGrid && data.outcomesGrid.some(o => o.statement && o.statement.trim() !== '')) || 
+                        (data.mappingValues && data.mappingValues.some(r => r.some(v => v && v !== 'none'))) || 
+                        (data.conceptMap && data.conceptMap !== '' && !data.conceptMap.endsWith('undefined'))
+                    );
+                    if (isTouched) hasLocalDraft = true;
+                } catch(e) {}
+            }
+            if (hasLocalSchedule) hasLocalDraft = true;
+
+            if (hasLocalDraft && (!course.hasDraft || course.status === 'No Syllabus Draft')) {
+                course.status = 'Draft';
+                course.hasDraft = true;
+            }
+        });
 
         if (courses.length > 0) {
             courseGrid.innerHTML = courses.map(course => {
@@ -435,7 +547,7 @@ window.openDraftModal = function (syllabusId, hasDraft, status) {
     const btn = document.getElementById('draftActionBtn');
     const modalTitle = document.getElementById('draftModalTitle');
 
-    const RestrictedStatuses = ['Approved', 'Pending Endorsement', 'Archived', 'Endorsed', 'Endorsed to Dean'];
+    const RestrictedStatuses = ['Approved', 'Pending', 'Pending PC Signature', 'Pending Endorsement', 'Archived', 'Endorsed', 'Endorsed to Dean'];
     const isRestricted = RestrictedStatuses.includes(status);
     const isVerified = status === 'Archived';
 
@@ -444,7 +556,40 @@ window.openDraftModal = function (syllabusId, hasDraft, status) {
         modalTitle.textContent = isVerified ? 'Syllabus' : 'Syllabus Draft';
     }
 
-    if (hasDraft) {
+    // Remove previous if exists
+    if (btn && btn.parentNode) {
+        const existingCoBtn = btn.parentNode.querySelector('#coReportBtnId_PC');
+        if (existingCoBtn) existingCoBtn.remove();
+    }
+
+    const hasLocalInfo = sessionStorage.getItem(`syllabus_draft_info_${syllabusId}`);
+    const hasLocalSchedule = sessionStorage.getItem(`syllabus_draft_schedule_${syllabusId}`);
+    let hasLocalDraft = false;
+    if (hasLocalInfo) {
+        try {
+            const data = JSON.parse(hasLocalInfo);
+            const isTouched = (
+                data.courseDescription || 
+                data.textbook || 
+                data.references || 
+                data.preRequisite || 
+                data.coRequisite || 
+                data.creditUnits || 
+                (data.lectureHours && parseFloat(data.lectureHours) > 0) || 
+                (data.labHours && parseFloat(data.labHours) > 0) || 
+                data.courseDesign || 
+                (data.outcomesGrid && data.outcomesGrid.some(o => o.statement && o.statement.trim() !== '')) || 
+                (data.mappingValues && data.mappingValues.some(r => r.some(v => v && v !== 'none'))) || 
+                (data.conceptMap && data.conceptMap !== '' && !data.conceptMap.endsWith('undefined'))
+            );
+            if (isTouched) {
+                hasLocalDraft = true;
+            }
+        } catch(e) {}
+    }
+    if (hasLocalSchedule) hasLocalDraft = true;
+
+    if (hasDraft || hasLocalDraft) {
         if (isVerified) {
             msg.innerText = 'This syllabus has been verified by HR.';
             btn.innerText = 'View Syllabus';
@@ -460,11 +605,8 @@ window.openDraftModal = function (syllabusId, hasDraft, status) {
             coReportBtn.style.background = '#1976d2';
             coReportBtn.style.color = 'white';
             coReportBtn.style.marginTop = '10px';
-            coReportBtn.onclick = () => window.openDashboardCoReport(syllabusId, false); // PC can also edit
+            coReportBtn.onclick = () => window.openDashboardCoReport(syllabusId, status !== 'Archived'); // PC can also edit
 
-            // Remove previous if exists
-            const existingCoBtn = btn.parentNode.querySelector('#coReportBtnId_PC');
-            if (existingCoBtn) existingCoBtn.remove();
             
             btn.parentNode.insertBefore(coReportBtn, btn.nextSibling);
 

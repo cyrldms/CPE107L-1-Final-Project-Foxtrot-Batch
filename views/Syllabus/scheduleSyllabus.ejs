@@ -421,33 +421,33 @@
                 </div>
             </div>
 
-            <div class="button-footer-outer">
+            <div class="button-footer-outer" style="flex-direction: column; align-items: flex-end; gap: 12px; margin-bottom: 40px; padding-right: 40px;">
                 <% if (locals.approvalStatus === 'Archived') { %>
                     <button class="next-btn-rect" onclick="saveDateCoveredOnly()" type="button"
-                        style="width: 250px; justify-content: center; background-color: #2e7d32; color: white;">
+                        style="width: 300px; justify-content: center; background-color: #2e7d32; color: white;">
                         <span>Save Date Covered</span>
                         <span class="material-symbols-outlined">save</span>
                     </button>
                     <button class="next-btn-rect" onclick="window.location.href='/syllabus'" type="button"
-                        style="width: 250px; justify-content: center;">
+                        style="width: 300px; justify-content: center;">
                         <span class="material-symbols-outlined">arrow_back</span>
                         <span>Back to Dashboard</span>
                     </button>
                 <% } else { %>
                     <button class="next-btn-rect" onclick="window.location.href='/syllabus/info/<%= locals.syllabusId %>'" type="button"
-                        style="width: 250px; justify-content: center;">
+                        style="width: 300px; justify-content: center;">
                         <span class="material-symbols-outlined">arrow_back</span>
                         <span>Back</span>
                     </button>
 
                     <button class="next-btn-rect" onclick="submitSyllabus('draft')" type="button"
-                        style="width: 250px; justify-content: center; background-color: #333; color: white;">
+                        style="width: 300px; justify-content: center; background-color: #333; color: white;">
                         <span>Save</span>
                         <span class="material-symbols-outlined">save</span>
                     </button>
 
                     <button class="next-btn-rect" onclick="submitSyllabus('submit')" type="button"
-                        style="width: 250px; justify-content: center; background-color: #333; color: white;">
+                        style="width: 300px; justify-content: center; background-color: #333; color: white;">
                         <span>Submit</span>
                         <span class="material-symbols-outlined">arrow_forward</span>
                     </button>

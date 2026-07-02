@@ -338,7 +338,7 @@ adminOverviewRouter.get('/search', async (req, res) => {
                     img: (c.courseImage && c.courseImage.startsWith('data:'))
                         ? c.courseImage
                         : `https://picsum.photos/seed/${c._id}/400/200`,
-                    status: record.status,
+                    status: (record && record.status === 'Endorsed to Dean') ? 'Endorsed' : (record ? record.status : 'No Syllabus Draft'),
                     remarks: getLatestRemark(record)
                 };
             });

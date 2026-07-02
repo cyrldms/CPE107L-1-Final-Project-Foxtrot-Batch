@@ -1,6 +1,12 @@
 /* ============================
    MAIN PANEL OVERRIDES & BORDERS
    ============================ */
+
+/* Draft status override */
+.course-status.status-draft {
+  color: #9ca3af !important;
+  font-weight: 600 !important;
+}
 .main-content {
   margin-left: 260px;
   min-height: calc(100vh - 40px);

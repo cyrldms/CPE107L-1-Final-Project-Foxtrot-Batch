@@ -21,7 +21,8 @@ syllabusTrackingRoutes.get('/', async (req, res) => {
         
         const trackingList = allSyllabi.map(syl => {
             const approval = allStatuses.find(a => a.syllabusID && a.syllabusID.toString() === syl._id.toString());
-            const status = approval ? approval.status : 'No Syllabus Draft';
+            let status = approval ? approval.status : 'No Syllabus Draft';
+            if (status === 'Endorsed to Dean') status = 'Endorsed';
             
             const program = syl.programPreparedFor || 'CPE';
             if (!curriculumMetrics[program]) {

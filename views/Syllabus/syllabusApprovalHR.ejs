@@ -68,7 +68,18 @@
                         <tr><td style="font-weight:bold; width: 30%; background:#f9f9f9;">Course Code</td><td><%= locals.courseCode %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">Course Title</td><td><%= locals.courseName %></td></tr>
                         <tr><td style="font-weight:bold; background:#f9f9f9;">AY / Term</td><td><%= locals.syl && locals.syl.schoolYear ? locals.syl.schoolYear : '' %> / <%= locals.syl && locals.syl.term ? locals.syl.term : '' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Pre-requisite</td><td><%= locals.syl && locals.syl.preRequisite ? locals.syl.preRequisite : 'None' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Co-requisite</td><td><%= locals.syl && locals.syl.coRequisite ? locals.syl.coRequisite : 'None' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Credit Units</td><td><%= locals.syl && locals.syl.units ? locals.syl.units : 'N/A' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Lecture Hours/Week</td><td><%= (locals.syl && locals.syl.lectureHours && locals.syl.lectureHours !== '0') ? locals.syl.lectureHours : '-' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Laboratory Hours/Week</td><td><%= (locals.syl && locals.syl.labHours && locals.syl.labHours !== '0') ? locals.syl.labHours : '-' %></td></tr>
+                        <tr><td style="font-weight:bold; background:#f9f9f9;">Course Design</td><td><%= locals.syl && locals.syl.courseDesign ? locals.syl.courseDesign : 'Not set' %></td></tr>
                     </table>
+
+                    <h3 class="ad-section-heading" data-section-key="course_desc">Course Description</h3>
+                    <div style="text-align: justify; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333;">
+                        <%= locals.syl && locals.syl.courseDescription ? locals.syl.courseDescription : 'No course description provided.' %>
+                    </div>
 
                     <h3 class="ad-section-heading" data-section-key="peo">Program Educational Objectives (PEO)</h3>
                     <% if (locals.peos && locals.peos.length > 0 && locals.peos[0].description) { %>
@@ -267,6 +278,34 @@
                     <% } else { %>
                         <p class="ad-no-content">No course evaluation provided.</p>
                     <% } %>
+
+                    <h3 class="ad-section-heading" data-section-key="grading">Grading System</h3>
+                    <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px;">
+                        <table class="ad-data-table" style="font-size: 0.85rem; width: 300px; text-align: center;">
+                            <thead>
+                                <tr><th>Percentage</th><th>Grade</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>100 - 92.75</td><td>1.00</td></tr>
+                                <tr><td>92.74 - 86.25</td><td>1.25 - 1.75</td></tr>
+                                <tr><td>86.24 - 79.75</td><td>2.00 - 2.25</td></tr>
+                                <tr><td>79.74 - 73.25</td><td>2.50 - 2.75</td></tr>
+                                <tr><td>73.24 - 70.00</td><td>3.00</td></tr>
+                                <tr><td>Below 70</td><td>IP</td></tr>
+                            </tbody>
+                        </table>
+                        <div style="flex: 1; color: #444;">
+                            <p style="margin-bottom: 5px;"><strong>Passing Grade:</strong> 1.0 to 3.0 (Obtained above 70%)</p>
+                            <p style="margin-bottom: 5px;"><strong>In-Progress (IP):</strong> Obtained below 70%</p>
+                            <p><strong>Failing Grade (5.0):</strong> Violation of Academic Integrity</p>
+                        </div>
+                    </div>
+
+                    <h3 class="ad-section-heading" data-section-key="textbook">Textbook</h3>
+                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333; white-space: pre-wrap;"><%= locals.syl && locals.syl.textbook ? locals.syl.textbook : 'No textbook specified.' %></div>
+
+                    <h3 class="ad-section-heading" data-section-key="references">References</h3>
+                    <div style="margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; color: #333; white-space: pre-wrap;"><%= locals.syl && locals.syl.references ? locals.syl.references : 'No references specified.' %></div>
 
                     <h3 class="ad-section-heading" data-section-key="assessment">Course Outcomes Assessment</h3>
                     <% if (locals.cos && locals.cos.length > 0) { %>

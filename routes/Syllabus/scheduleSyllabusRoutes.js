@@ -215,11 +215,11 @@ scheduleSyllabusRoutes.post('/submit', async (req, res) => {
             initialStatus = 'Draft';
             initialRemarks = 'Saved as Draft';
         } else if (userRole === 'program-chair') {
-            initialStatus = 'Pending Faculty Signature';
+            initialStatus = 'Draft';
             initialRemarks = 'Awaiting Faculty Signature';
         } else if (userRole === 'faculty' || userRole === 'professor') {
-            initialStatus = 'Pending Faculty Signature';
-            initialRemarks = 'Submitted for Signature by Faculty';
+            initialStatus = 'Draft';
+            initialRemarks = 'Saved as Draft';
         } else if (userRole === 'dean') {
             // Dean submits → auto-endorse + auto-approve, skip to HR
             initialStatus = 'Approved';

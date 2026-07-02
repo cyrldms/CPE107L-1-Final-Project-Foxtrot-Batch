@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Courses — Program Chair</title>
     <link rel="icon" type="image/x-icon" href="/common/img/chalkboardLogo.ico">
-    <link rel="stylesheet" href="/common/css/variables.css">
+    <link rel="stylesheet" href="/common/css/variables.css?v=<%= new Date().getTime() %>">
     <link rel="stylesheet" href="/Syllabus/css/syllabus.css">
     <link rel="stylesheet" href="/Syllabus/css/courseOverview.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -116,20 +116,36 @@
                                                     var rawStatus = course.status || 'No Syllabus Draft';
                                                     var statusClass = 'status-no-draft';
                                                     var statusLabel = rawStatus;
-                                                    if (rawStatus === 'Pending Endorsement') { statusClass = 'status-pending'; statusLabel = 'Pending Endorsement'; }
-                                                    else if (rawStatus === 'Pending') { statusClass = 'status-pending'; statusLabel = 'Pending Endorsement'; }
-                                                    else if (rawStatus === 'Endorsed') { statusClass = 'status-endorsed'; statusLabel = 'Endorsed'; }
-                                                    else if (rawStatus === 'Approved') { statusClass = 'status-approved'; statusLabel = 'Approved by Dean'; }
-                                                    else if (rawStatus === 'Archived') { statusClass = 'status-archived'; statusLabel = 'Verified by HR'; }
+                                                    if (rawStatus === 'Draft') { statusClass = 'status-draft'; statusLabel = '<span style="color:#9ca3af;font-weight:600;">Saved as Draft</span>'; }
+                                                    else if (rawStatus === 'Pending Endorsement') { statusClass = 'status-pending'; statusLabel = 'Pending'; }
+                                                    else if (rawStatus === 'Pending') { statusClass = 'status-pending'; statusLabel = 'Pending'; }
+                                                    else if (rawStatus === 'Signed by Faculty') { statusClass = 'status-pending'; statusLabel = 'Pending'; }
+                                                    else if (rawStatus === 'Endorsed' || rawStatus === 'Endorsed to Dean') { statusClass = 'status-endorsed'; statusLabel = 'Endorsed'; }
+                                                    else if (rawStatus === 'Approved') { statusClass = 'status-approved'; statusLabel = 'Approved'; }
+                                                    else if (rawStatus === 'Archived') { statusClass = 'status-archived'; statusLabel = 'Archived'; }
                                                     else if (rawStatus === 'Rejected' || rawStatus === 'Returned') { statusClass = 'status-rejected'; statusLabel = rawStatus; }
                                                     else if (rawStatus === 'Returned to PC') { statusClass = 'status-returned'; statusLabel = 'Returned to PC'; }
                                                 %>
                                                 <p class="course-status <%= statusClass %>">
-                                                    <%= statusLabel %>
-                                                    <% if (course.remarks) { %>
-                                                        <span style="display: block; font-size: 11px; color: #777; font-style: italic; margin-top: 4px; border-top: 1px dashed #eee; padding-top: 4px;">
-                                                           <i class="fas fa-comment-dots"></i> <%= course.remarks %>
+                                                    <%- statusLabel %>
+                                                    <% if (rawStatus !== 'No Syllabus Draft') { %>
+                                                    <span style="display: block; margin-top: 6px; font-size: 11px; color: #555; border-top: 1px dashed #e0e0e0; padding-top: 6px; font-style: normal; font-weight: normal; line-height: 1.4;">
+                                                        <span style="margin-bottom: 3px; display: flex; align-items: center; width: 100%;">
+                                                            <i class="fas fa-comment-dots" style="color: #1565c0; margin-right: 4px; flex-shrink: 0;"></i>
+                                                            <strong style="color: #1565c0; margin-right: 4px; flex-shrink: 0;">PC:</strong>
+                                                            <span style="font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;"><%= course.pcRemarks || 'no feedback' %></span>
                                                         </span>
+                                                        <span style="margin-bottom: 3px; display: flex; align-items: center; width: 100%;">
+                                                            <i class="fas fa-comment-dots" style="color: #2e7d32; margin-right: 4px; flex-shrink: 0;"></i>
+                                                            <strong style="color: #2e7d32; margin-right: 4px; flex-shrink: 0;">Dean:</strong>
+                                                            <span style="font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;"><%= course.deanRemarks || 'no feedback' %></span>
+                                                        </span>
+                                                        <span style="margin-bottom: 3px; display: flex; align-items: center; width: 100%;">
+                                                            <i class="fas fa-comment-dots" style="color: #6a1b9a; margin-right: 4px; flex-shrink: 0;"></i>
+                                                            <strong style="color: #6a1b9a; margin-right: 4px; flex-shrink: 0;">HR/Admin:</strong>
+                                                            <span style="font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;"><%= course.hrRemarks || 'no feedback' %></span>
+                                                        </span>
+                                                    </span>
                                                     <% } %>
                                                 </p>
                                             </div>
@@ -189,13 +205,19 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="courseTitle">Course Name</label>
-                    <input type="text" id="courseTitle" name="courseTitle" placeholder="e.g. Software Design" required>
+                    <label for="courseCode">Course ID</label>
+                    <div class="select-wrapper">
+                        <select id="courseCode" name="courseCode" required>
+                            <option value="">— Select a Course —</option>
+                        </select>
+                        <i class="fas fa-chevron-down select-arrow"></i>
+                    </div>
+                    <span class="form-hint" id="courseHint">Loading courses from database...</span>
                 </div>
 
                 <div class="form-group">
-                    <label for="courseCode">Course ID</label>
-                    <input type="text" id="courseCode" name="courseCode" placeholder="e.g. CPE107L-1" required>
+                    <label for="courseTitle">Course Name</label>
+                    <input type="text" id="courseTitle" name="courseTitle" placeholder="Course name will auto-populate" readonly required style="background-color: #f5f5f5; color: #555;">
                 </div>
 
                 <div class="form-group">
@@ -303,7 +325,7 @@
         }
     </script>
 
-    <script src="/Syllabus/js/endorseSyllabus.js"></script>
+    <script src="/Syllabus/js/endorseSyllabus.js?v=<%= new Date().getTime() %>"></script>
     <script src="/Syllabus/js/coAssessmentEvaluation.js?v=<%= new Date().getTime() %>"></script>
 </body>
 

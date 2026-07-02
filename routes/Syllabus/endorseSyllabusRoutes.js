@@ -11,6 +11,7 @@ import CourseMapping from '../../models/Syllabus/courseMapping.js';
 import WeeklySchedule from '../../models/Syllabus/weeklySchedule.js';
 
 import CourseEvaluationPerCO from '../../models/Syllabus/courseEvaluationPerCO.js';
+import Subject from '../../models/TWS/subject.js';
 
 const endorseSyllabusRouter = express.Router();
 
@@ -107,6 +108,27 @@ const DUMMY_DRAFTS = [
 ];
 
 /* -----------------------------------------------------------------------
+   API ENDPOINTS
+   ----------------------------------------------------------------------- */
+// Req 1: Fetch courses exclusively from centralized database
+endorseSyllabusRouter.get('/api/courses', async (req, res) => {
+    console.log("DEBUG: /api/courses route HIT!");
+    try {
+        const db = mongoose.connection.db;
+        const subjects = await db.collection('subjects').find({}, { projection: { code: 1, title: 1 } }).toArray();
+        console.log(`DEBUG: Found ${subjects.length} subjects in DB natively.`);
+        const distinctCourses = subjects.map(s => ({
+            courseCode: s.code,
+            courseTitle: s.title
+        }));
+        res.json(distinctCourses);
+    } catch (error) {
+        console.error('Error fetching centralized courses:', error);
+        res.status(500).json({ error: 'Failed to fetch courses' });
+    }
+});
+
+/* -----------------------------------------------------------------------
    GET /syllabus/prog-chair  →  Course Overview (Program Chair)
    ----------------------------------------------------------------------- */
 endorseSyllabusRouter.get('/', async (req, res) => {
@@ -134,7 +156,11 @@ endorseSyllabusRouter.get('/', async (req, res) => {
                     ? c.courseImage
                     : `https://picsum.photos/seed/${c._id}/400/200`,
                 hasDraft: !!draftRecord,
-                status: draftRecord ? draftRecord.status : 'No Syllabus Draft'
+                status: draftRecord ? draftRecord.status : 'No Syllabus Draft',
+                remarks: draftRecord ? (draftRecord.remarks || '') : '',
+                pcRemarks: draftRecord ? (draftRecord.PC_Remarks || draftRecord.remarks || '') : '',
+                deanRemarks: draftRecord ? (draftRecord.Dean_Remarks || '') : '',
+                hrRemarks: draftRecord ? (draftRecord.HR_Remarks || '') : ''
             };
         });
 
@@ -218,14 +244,17 @@ endorseSyllabusRouter.get('/approve', async (req, res) => {
     try {
         const approvals = await SyllabusApprovalStatus.find({
             $or: [
-                { status: 'Pending Faculty Signature' },
-                { status: 'Signed by Faculty' },
+                { status: 'Pending' },
                 { status: 'Pending Endorsement' },
+                { status: 'Signed by Faculty' },
+                { status: 'Endorsed' },
+                { status: 'Endorsed to Dean' }, // Support legacy db records
+                { status: 'Rejected' },
                 { status: 'Approved', approvedBy: 'PC_Approved' },
                 { status: 'Approved', approvedBy: 'Program Chair' },
-                { status: 'Endorsed' },
                 { status: 'Returned to PC' },
-                { approvedBy: 'Rejected' }
+                { approvedBy: 'Rejected' },
+                { approvedBy: 'Program Chair (Returned)' }
             ]
         });
         let drafts = [];
@@ -243,18 +272,18 @@ endorseSyllabusRouter.get('/approve', async (req, res) => {
                 if (!syl) return null;
                 
                 // Map status for frontend filter (Pending, PC_Approved, or Rejected)
-                let displayStatus = approval.status === 'Pending Faculty Signature' || approval.status === 'Signed by Faculty' ? approval.status : 'Pending Endorsement';
+                let displayStatus = 'Pending';
                 let statusDateLabel = 'Submitted';
 
-                if (approval.approvedBy === 'Rejected') {
+                if (approval.status === 'Endorsed' || approval.status === 'Endorsed to Dean' ||
+                    approval.approvedBy === 'PC_Approved' || approval.approvedBy === 'Program Chair') {
+                    displayStatus = 'PC_Approved';
+                    statusDateLabel = 'Endorsed';
+                } else if (approval.status === 'Rejected' ||
+                           approval.approvedBy === 'Rejected' ||
+                           approval.approvedBy === 'Program Chair (Returned)') {
                     displayStatus = 'Rejected';
                     statusDateLabel = 'Rejected';
-                } else if (approval.status === 'Endorsed' || approval.status === 'Endorsed to Dean') {
-                    displayStatus = 'PC_Approved';
-                    statusDateLabel = 'Endorsed';
-                } else if (approval.approvedBy === 'PC_Approved' || approval.approvedBy === 'Program Chair') {
-                    displayStatus = 'PC_Approved';
-                    statusDateLabel = 'Endorsed';
                 }
 
                 return {
@@ -281,11 +310,11 @@ endorseSyllabusRouter.get('/approve', async (req, res) => {
 
 
 
-        const pendingCount = drafts.filter(d => d.status === 'Pending Endorsement').length;
-        const approvedHistoryCount = drafts.filter(d => d.status === 'PC_Approved').length;
+        const pendingCount = drafts.filter(d => d.status === 'Pending' || d.status === 'Pending Endorsement').length;
+        const approvedHistoryCount = drafts.filter(d => d.status === 'PC_Approved' || d.status === 'Endorsed').length;
         const rejectedCount = drafts.filter(d => d.status === 'Rejected').length;
 
-        const statusOrder = { 'Pending Endorsement': 1, 'PC_Approved': 2, 'Endorsed': 2, 'Rejected': 3 };
+        const statusOrder = { 'Pending': 1, 'Pending Endorsement': 1, 'PC_Approved': 2, 'Endorsed': 2, 'Rejected': 3 };
         drafts.sort((a, b) => (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99));
 
         res.render('Syllabus/syllabusEndorsementQueue', {
@@ -438,7 +467,7 @@ endorseSyllabusRouter.post('/approve/:syllabusId', async (req, res) => {
             approval.status = 'Rejected';
             approval.approvedBy = 'Rejected';
         } else if (status === 'PC_Approved' || status === 'Approve Syllabus') {
-            approval.status = 'Endorsed to Dean'; 
+            approval.status = 'Endorsed'; 
             approval.approvedBy = 'Program Chair';
             approval.approvalDate = new Date();
             approval.remarks = ''; // Clear legacy 'Awaiting Faculty Signature'
@@ -478,7 +507,7 @@ endorseSyllabusRouter.get('/endorse', async (req, res) => {
             $or: [
                 { status: 'Approved', approvedBy: 'PC_Approved' }, // Ready to endorse (from approval queue)
                 { status: 'Endorsed' }, // Already endorsed by Program Chair
-                { status: 'Endorsed to Dean' }
+                { status: 'Endorsed to Dean' } // Legacy support
             ]
         });
         console.log(`📋 ENDORSE QUEUE - Found ${approvals.length} approvals matching criteria`);
@@ -498,7 +527,7 @@ endorseSyllabusRouter.get('/endorse', async (req, res) => {
                 const syl = syllabuses.find(s => s._id.toString() === approval.syllabusID.toString());
                 if (!syl) return null;
 
-                // Map status for frontend filter (Pending or Endorsed)
+                // Use simple check (treat legacy Endorsed to Dean as Endorsed)
                 const isEndorsed = (approval.status === 'Endorsed' || approval.status === 'Endorsed to Dean');
                 const displayStatus = isEndorsed ? 'Endorsed' : 'Pending Endorsement';
 
@@ -661,7 +690,7 @@ endorseSyllabusRouter.post('/endorse/:syllabusId', async (req, res) => {
         let approval = await SyllabusApprovalStatus.findOne({ syllabusID: syllabusId });
         if (!approval) return res.status(404).json({ success: false, message: 'Approval record not found.' });
 
-        if (approval.approvedBy !== 'PC_Approved' && approval.status !== 'Approved' && approval.status !== 'Endorsed' && approval.status !== 'Signed by Faculty') {
+        if (approval.approvedBy !== 'PC_Approved' && approval.status !== 'Approved' && approval.status !== 'Endorsed' && approval.status !== 'Signed by Faculty' && approval.status !== 'Pending') {
             return res.status(400).json({ success: false, message: 'Syllabus must be Signed by Faculty before it can be endorsed.' });
         }
 
@@ -680,7 +709,7 @@ endorseSyllabusRouter.post('/endorse/:syllabusId', async (req, res) => {
         }
 
         if (status === 'Approved' || status === 'PC_Approved') {
-            approval.status = 'Endorsed to Dean';
+            approval.status = 'Endorsed';
             approval.approvedBy = 'Program Chair';
             approval.approvalDate = new Date();
             

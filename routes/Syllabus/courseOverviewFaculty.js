@@ -218,7 +218,7 @@ coursesOverviewFacultyRouter.post('/submit/:syllabusId', async (req, res) => {
         if (!approval) {
             approval = new SyllabusApprovalStatus({
                 syllabusID: syllabusId,
-                status: 'Signed by Faculty',
+                status: 'Pending',
                 approvedBy: [],
                 remarks: ''
             });
@@ -226,7 +226,7 @@ coursesOverviewFacultyRouter.post('/submit/:syllabusId', async (req, res) => {
 
         approval.Faculty_Signature = signature;
         approval.Faculty_SignatoryName = signatoryName;
-        approval.status = 'Signed by Faculty';
+        approval.status = 'Pending';
         
         await approval.save();
         

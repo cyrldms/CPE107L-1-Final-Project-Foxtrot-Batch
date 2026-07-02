@@ -100,6 +100,10 @@ body {
     color: var(--status-rejected) !important;
     font-weight: 700 !important;
 }
+.course-status.status-draft {
+    color: var(--status-draft) !important;
+    font-weight: 600 !important;
+}
 .course-status.status-no-draft {
     color: var(--status-no-draft) !important;
     font-weight: 500 !important;

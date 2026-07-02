@@ -856,6 +856,16 @@ document.addEventListener('mouseup', () => {
 
 // Initial Rows
 document.addEventListener('DOMContentLoaded', () => {
+    // ---------------------------------------------------------
+    // Auto-save when an editable element loses focus
+    // ---------------------------------------------------------
+    document.addEventListener('focusout', (e) => {
+        if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+            autoSaveInfo();
+        }
+    });
+
+    const isEditMode = window.SYLLABUS_IS_EDIT_MODE || false;
   const body = document.getElementById('outcomes-editor-body');
   if (body && body.querySelectorAll('tr').length === 0) {
     addEditorRow();

@@ -26,7 +26,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     function attachCardClickHandlers() {
         document.querySelectorAll('.course-card').forEach(card => {
-            card.removeEventListener('click', handleCardClick);
+            const courseId = card.dataset.id;
+            
+            // Check local storage for drafts
+            const hasLocalInfo = sessionStorage.getItem(`syllabus_draft_info_${courseId}`);
+            const hasLocalSchedule = sessionStorage.getItem(`syllabus_draft_schedule_${courseId}`);
+            let hasLocalDraft = false;
+            if (hasLocalInfo) {
+                try {
+                    const data = JSON.parse(hasLocalInfo);
+                    const isTouched = (
+                        data.courseDescription || data.textbook || data.references || data.preRequisite || data.coRequisite || data.creditUnits || 
+                        (data.lectureHours && parseFloat(data.lectureHours) > 0) || (data.labHours && parseFloat(data.labHours) > 0) || data.courseDesign || 
+                        (data.outcomesGrid && data.outcomesGrid.some(o => o.statement && o.statement.trim() !== '')) || 
+                        (data.mappingValues && data.mappingValues.some(r => r.some(v => v && v !== 'none'))) || 
+                        (data.conceptMap && data.conceptMap !== '' && !data.conceptMap.endsWith('undefined'))
+                    );
+                    if (isTouched) hasLocalDraft = true;
+                } catch(e) {}
+            }
+            if (hasLocalSchedule) hasLocalDraft = true;
+
+            let status = card.dataset.status || 'No Syllabus Draft';
+            let hasDraft = card.dataset.hasdraft === 'true';
+
+            if (hasLocalDraft && (!hasDraft || status === 'No Syllabus Draft')) {
+                status = 'Draft';
+                hasDraft = true;
+                card.dataset.status = status;
+                card.dataset.hasdraft = 'true';
+                
+                // Update DOM text
+                const statusEl = card.querySelector('.course-status');
+                if (statusEl) {
+                    statusEl.className = 'course-status status-pending';
+                    statusEl.innerText = 'Saved as Draft';
+                }
+            }
+
             card.addEventListener('click', handleCardClick);
         });
     }
@@ -82,11 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function getStatusInfo(status) {
         switch(status) {
             case 'Pending Endorsement': 
-            case 'Pending': return { cssClass: 'status-pending', label: 'Pending Endorsement' };
+            case 'Signed by Faculty':
+            case 'Pending': return { cssClass: 'status-pending', label: 'Pending' };
             case 'Endorsed': 
-            case 'Endorsed to Dean': return { cssClass: 'status-endorsed', label: 'Endorsed to Dean' };
-            case 'Approved': return { cssClass: 'status-approved', label: 'Approved by Dean' };
-            case 'Archived': return { cssClass: 'status-archived', label: 'Verified by HR' };
+            case 'Endorsed to Dean': return { cssClass: 'status-endorsed', label: 'Endorsed' };
+            case 'Approved': return { cssClass: 'status-approved', label: 'Approved' };
+            case 'Archived': return { cssClass: 'status-archived', label: 'Archived' };
             case 'Rejected': case 'Returned': return { cssClass: 'status-rejected', label: status };
             case 'Draft': return { cssClass: 'status-pending', label: 'Saved as Draft' };
             case 'Pending Faculty Signature': return { cssClass: 'status-pending', label: 'Pending Faculty Signature' };
@@ -139,6 +177,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const isListView = courseGrid.classList.contains('list-view');
 
+        courses.forEach(course => {
+            const hasLocalInfo = sessionStorage.getItem(`syllabus_draft_info_${course.id}`);
+            const hasLocalSchedule = sessionStorage.getItem(`syllabus_draft_schedule_${course.id}`);
+            let hasLocalDraft = false;
+            if (hasLocalInfo) {
+                try {
+                    const data = JSON.parse(hasLocalInfo);
+                    const isTouched = (
+                        data.courseDescription || data.textbook || data.references || data.preRequisite || data.coRequisite || data.creditUnits || 
+                        (data.lectureHours && parseFloat(data.lectureHours) > 0) || (data.labHours && parseFloat(data.labHours) > 0) || data.courseDesign || 
+                        (data.outcomesGrid && data.outcomesGrid.some(o => o.statement && o.statement.trim() !== '')) || 
+                        (data.mappingValues && data.mappingValues.some(r => r.some(v => v && v !== 'none'))) || 
+                        (data.conceptMap && data.conceptMap !== '' && !data.conceptMap.endsWith('undefined'))
+                    );
+                    if (isTouched) hasLocalDraft = true;
+                } catch(e) {}
+            }
+            if (hasLocalSchedule) hasLocalDraft = true;
+
+            if (hasLocalDraft && (!course.hasDraft || course.status === 'No Syllabus Draft')) {
+                course.status = 'Draft';
+                course.hasDraft = true;
+            }
+        });
+
         if (courses.length > 0) {
             courseGrid.innerHTML = courses.map(course => {
                 const si = getStatusInfo(course.status);
@@ -180,7 +243,7 @@ window.openDraftModal = async function (syllabusId, hasDraft, status, courseTitl
     const downloadBtn = document.getElementById('draftDownloadBtn');
     const modalTitle = document.getElementById('draftModalTitle');
 
-    const RestrictedStatuses = ['Approved', 'Pending Endorsement', 'Archived', 'Endorsed', 'Endorsed to Dean'];
+    const RestrictedStatuses = ['Approved', 'Pending', 'Pending PC Signature', 'Pending Endorsement', 'Archived', 'Endorsed', 'Endorsed to Dean'];
     const isRestricted = RestrictedStatuses.includes(status);
     const isVerified = status === 'Archived';
 
@@ -192,7 +255,42 @@ window.openDraftModal = async function (syllabusId, hasDraft, status, courseTitl
     // Hide download button by default
     if (downloadBtn) downloadBtn.style.display = 'none';
 
-    if (hasDraft) {
+    // Remove previous if exists
+    if (btn && btn.parentNode) {
+        const existingCoBtn = btn.parentNode.querySelector('#coReportBtnId');
+        if (existingCoBtn) existingCoBtn.remove();
+        const existingDateBtn = btn.parentNode.querySelector('#dateCoveredBtnId');
+        if (existingDateBtn) existingDateBtn.remove();
+    }
+
+    const hasLocalInfo = sessionStorage.getItem(`syllabus_draft_info_${syllabusId}`);
+    const hasLocalSchedule = sessionStorage.getItem(`syllabus_draft_schedule_${syllabusId}`);
+    let hasLocalDraft = false;
+    if (hasLocalInfo) {
+        try {
+            const data = JSON.parse(hasLocalInfo);
+            const isTouched = (
+                data.courseDescription || 
+                data.textbook || 
+                data.references || 
+                data.preRequisite || 
+                data.coRequisite || 
+                data.creditUnits || 
+                (data.lectureHours && parseFloat(data.lectureHours) > 0) || 
+                (data.labHours && parseFloat(data.labHours) > 0) || 
+                data.courseDesign || 
+                (data.outcomesGrid && data.outcomesGrid.some(o => o.statement && o.statement.trim() !== '')) || 
+                (data.mappingValues && data.mappingValues.some(r => r.some(v => v && v !== 'none'))) || 
+                (data.conceptMap && data.conceptMap !== '' && !data.conceptMap.endsWith('undefined'))
+            );
+            if (isTouched) {
+                hasLocalDraft = true;
+            }
+        } catch(e) {}
+    }
+    if (hasLocalSchedule) hasLocalDraft = true;
+
+    if (hasDraft || hasLocalDraft) {
         if (isVerified) {
             const syllabusName = courseTitle ? `${courseTitle} Syllabus` : 'Syllabus';
             msg.innerText = syllabusName;
@@ -251,15 +349,8 @@ window.openDraftModal = async function (syllabusId, hasDraft, status, courseTitl
             coReportBtn.style.background = '#1976d2';
             coReportBtn.style.color = 'white';
             coReportBtn.style.marginTop = '10px';
-            coReportBtn.onclick = () => window.openDashboardCoReport(syllabusId, false);
+            coReportBtn.onclick = () => window.openDashboardCoReport(syllabusId, status !== 'Archived');
 
-            // Remove previous if exists
-            const existingCoBtn = btn.parentNode.querySelector('#coReportBtnId');
-            if (existingCoBtn) existingCoBtn.remove();
-            
-            // Remove previous if exists
-            const existing = btn.parentNode.querySelector('#dateCoveredBtnId');
-            if (existing) existing.remove();
             
             btn.parentNode.insertBefore(dateCoveredBtn, btn);
             btn.parentNode.insertBefore(coReportBtn, btn);
@@ -366,7 +457,6 @@ window.addEventListener('click', function (event) {
     }
 
     function endDraw(evt) {
-        if (evt) evt.preventDefault();
         sigDrawing = false;
     }
 
@@ -529,5 +619,6 @@ window.addEventListener('click', function (event) {
                 initCanvas();
                 setStatusMsg('');
             });
+        }
     });
 })();

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Courses</title>
     <link rel="icon" type="image/x-icon" href="/common/img/chalkboardLogo.ico">
-    <link rel="stylesheet" href="/common/css/variables.css">
+    <link rel="stylesheet" href="/common/css/variables.css?v=<%= new Date().getTime() %>">
     <link rel="stylesheet" href="/Syllabus/css/syllabus.css">
     <link rel="stylesheet" href="/Syllabus/css/courseOverview.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -79,7 +79,7 @@
                                     <i class="fas fa-chart-line"></i> Syllabus Tracking
                                 </button>
                                 <button onclick="openReviewFormModal()" 
-                                    style="background-color: var(--accent-secondary); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px; height: 38px; margin-left: 10px;">
+                                    style="background-color: var(--accent-secondary); color: white; border: none; padding: 0 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; height: 36px; margin-left: 10px;">
                                     <i class="fas fa-file-contract"></i> Syllabus Review Form
                                 </button>
 
@@ -120,21 +120,36 @@
                                                     var rawStatus = course.status || 'No Syllabus Draft';
                                                     var statusClass = 'status-no-draft';
                                                     var statusLabel = rawStatus;
-                                                    if (rawStatus === 'Pending Endorsement' || rawStatus === 'Pending Faculty Signature') { statusClass = 'status-pending'; statusLabel = rawStatus; }
-                                                    else if (rawStatus === 'Pending') { statusClass = 'status-pending'; statusLabel = 'Pending Endorsement'; }
-                                                    else if (rawStatus === 'Signed by Faculty') { statusClass = 'status-pending'; statusLabel = 'Signed by Faculty'; }
-                                                    else if (rawStatus === 'Endorsed' || rawStatus === 'Endorsed to Dean') { statusClass = 'status-endorsed'; statusLabel = rawStatus; }
-                                                    else if (rawStatus === 'Approved') { statusClass = 'status-approved'; statusLabel = 'Approved by Dean'; }
-                                                    else if (rawStatus === 'Archived') { statusClass = 'status-archived'; statusLabel = 'Verified by HR'; }
+                                                    if (rawStatus === 'Draft') { statusClass = 'status-draft'; statusLabel = '<span style="color:#9ca3af;font-weight:600;">Saved as Draft</span>'; }
+                                                    else if (rawStatus === 'Pending Endorsement' || rawStatus === 'Pending Faculty Signature') { statusClass = 'status-pending'; statusLabel = (rawStatus === 'Pending Endorsement' ? 'Pending' : rawStatus); }
+                                                    else if (rawStatus === 'Pending') { statusClass = 'status-pending'; statusLabel = 'Pending'; }
+                                                    else if (rawStatus === 'Signed by Faculty') { statusClass = 'status-pending'; statusLabel = 'Pending'; }
+                                                    else if (rawStatus === 'Endorsed' || rawStatus === 'Endorsed to Dean') { statusClass = 'status-endorsed'; statusLabel = 'Endorsed'; }
+                                                    else if (rawStatus === 'Approved') { statusClass = 'status-approved'; statusLabel = 'Approved'; }
+                                                    else if (rawStatus === 'Archived') { statusClass = 'status-archived'; statusLabel = 'Archived'; }
                                                     else if (rawStatus === 'Rejected' || rawStatus === 'Returned') { statusClass = 'status-rejected'; statusLabel = rawStatus; }
                                                     else if (rawStatus === 'Returned to PC') { statusClass = 'status-returned'; statusLabel = 'Returned to PC'; }
                                                 %>
                                                 <p class="course-status <%= statusClass %>">
-                                                    <%= statusLabel %>
-                                                    <% if (course.remarks) { %>
-                                                        <span style="display: block; font-size: 11px; color: #777; font-style: italic; margin-top: 4px; border-top: 1px dashed #eee; padding-top: 4px;">
-                                                           <i class="fas fa-comment-dots"></i> <%= course.remarks %>
+                                                    <%- statusLabel %>
+                                                    <% if (rawStatus !== 'No Syllabus Draft') { %>
+                                                    <span style="display: block; margin-top: 6px; font-size: 11px; color: #555; border-top: 1px dashed #e0e0e0; padding-top: 6px; font-style: normal; font-weight: normal; line-height: 1.4;">
+                                                        <span style="margin-bottom: 3px; display: flex; align-items: center; width: 100%;">
+                                                            <i class="fas fa-comment-dots" style="color: #1565c0; margin-right: 4px; flex-shrink: 0;"></i>
+                                                            <strong style="color: #1565c0; margin-right: 4px; flex-shrink: 0;">PC:</strong>
+                                                            <span style="font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;"><%= course.pcRemarks || 'no feedback' %></span>
                                                         </span>
+                                                        <span style="margin-bottom: 3px; display: flex; align-items: center; width: 100%;">
+                                                            <i class="fas fa-comment-dots" style="color: #2e7d32; margin-right: 4px; flex-shrink: 0;"></i>
+                                                            <strong style="color: #2e7d32; margin-right: 4px; flex-shrink: 0;">Dean:</strong>
+                                                            <span style="font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;"><%= course.deanRemarks || 'no feedback' %></span>
+                                                        </span>
+                                                        <span style="margin-bottom: 3px; display: flex; align-items: center; width: 100%;">
+                                                            <i class="fas fa-comment-dots" style="color: #6a1b9a; margin-right: 4px; flex-shrink: 0;"></i>
+                                                            <strong style="color: #6a1b9a; margin-right: 4px; flex-shrink: 0;">HR/Admin:</strong>
+                                                            <span style="font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;"><%= course.hrRemarks || 'no feedback' %></span>
+                                                        </span>
+                                                    </span>
                                                     <% } %>
                                                 </p>
                                             </div>
